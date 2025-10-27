@@ -43,13 +43,5 @@ Make sure to write tests.
 Transpile only variables, functions and print statement.
 Transpile only variables, functions and print statement.
 keep it simple for now, cause we'll be adding more features as we go.
+Always add more code to the === Complex Program === as we add more features to jRust.
 
-
-### jRust Syntax Overview
-```
-let x: number = 10;
-const NAME: string = "Alice";
-function greet(name: string): void {
-    print.info("Hello, " + name + "!");
-}
-```

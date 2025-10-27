@@ -1,13 +1,12 @@
-use jrust_transpiler_core::Lexer;
+use jrust_transpiler_core::{Lexer, Parser, Codegen};
 use anyhow::Result;
 
 fn main() -> Result<()> {
-    println!("=== jRust Lexer Demo ===\n");
+    println!("=== jRust Transpiler Demo ===\n");
     
     let examples = vec![
         ("Variable Declaration", "let x: number = 42;"),
         ("String Variable", "let name: string = \"Alice\";"),
-        ("Function", "function greet(name: string): void { print(\"Hello\"); }"),
         ("Print Statement", "print(\"Hello, World!\");"),
         ("String Concatenation", "print(\"Hello\" + \" \" + \"World\");"),
         ("Const Declaration", "const MAX_SIZE: number = 100;"),
@@ -15,11 +14,12 @@ fn main() -> Result<()> {
     
     for (description, code) in examples {
         println!("📝 {}", description);
-        println!("   Code: {}", code);
+        println!("   Input:  {}", code);
         
-        match tokenize(code) {
-            Ok(token_count) => {
-                println!("   ✅ Tokenized successfully ({} tokens)\n", token_count);
+        match transpile(code) {
+            Ok(rust_code) => {
+                println!("   Output: {}", rust_code.lines().next().unwrap_or(""));
+                println!("   ✅ Transpiled successfully\n");
             }
             Err(e) => {
                 eprintln!("   ❌ Error: {}\n", e);
@@ -27,16 +27,24 @@ fn main() -> Result<()> {
         }
     }
     
-    println!("=== Custom Code ===");
-    let custom = r#"
+    println!("=== Complex Program ===");
+    let complex = r#"
         let x: number = 42;
-        print("The answer is: " + x);
+        const msg: string = "The answer is: ";
+        
+        function printAnswer(value: number): void {
+            print(msg + value);
+        }
+        
+        printAnswer(x);
+        print("Done");
     "#;
     
-    println!("Input:\n{}\n", custom);
-    match tokenize(custom) {
-        Ok(token_count) => {
-            println!("✅ Tokenized successfully ({} tokens)", token_count);
+    println!("Input:\n{}\n", complex);
+    match transpile(complex) {
+        Ok(rust_code) => {
+            println!("Output:\n{}\n", rust_code);
+            println!("✅ Transpiled successfully");
         }
         Err(e) => {
             eprintln!("❌ Error: {}", e);
@@ -46,8 +54,14 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn tokenize(source: &str) -> Result<usize, String> {
+fn transpile(source: &str) -> Result<String, String> {
     let mut lexer = Lexer::new(source);
     let tokens = lexer.tokenize()?;
-    Ok(tokens.len())
+    let mut parser = Parser::new(tokens);
+    let program = parser.parse()?;
+    
+    let mut codegen = Codegen::new();
+    let rust_code = codegen.generate(&program);
+    
+    Ok(rust_code)
 }
