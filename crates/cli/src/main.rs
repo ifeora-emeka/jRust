@@ -1,32 +1,53 @@
-use jrust_transpiler_core::{greet, transpile};
+use jrust_transpiler_core::Lexer;
 use anyhow::Result;
 
 fn main() -> Result<()> {
-    println!("=== jRust CLI ===");
+    println!("=== jRust Lexer Demo ===\n");
     
-    greet("Developer");
+    let examples = vec![
+        ("Variable Declaration", "let x: number = 42;"),
+        ("String Variable", "let name: string = \"Alice\";"),
+        ("Function", "function greet(name: string): void { print(\"Hello\"); }"),
+        ("Print Statement", "print(\"Hello, World!\");"),
+        ("String Concatenation", "print(\"Hello\" + \" \" + \"World\");"),
+        ("Const Declaration", "const MAX_SIZE: number = 100;"),
+    ];
     
-    println!("\nAttempting to transpile sample code...");
-    match transpile("fn main() { print(\"Hello, jRust!\"); }") {
-        Ok(rust_code) => {
-            println!("\n✓ Transpilation successful!");
-            println!("\nGenerated Rust code:");
-            println!("{}", rust_code);
+    for (description, code) in examples {
+        println!("📝 {}", description);
+        println!("   Code: {}", code);
+        
+        match tokenize(code) {
+            Ok(token_count) => {
+                println!("   ✅ Tokenized successfully ({} tokens)\n", token_count);
+            }
+            Err(e) => {
+                eprintln!("   ❌ Error: {}\n", e);
+            }
+        }
+    }
+    
+    println!("=== Custom Code ===");
+    let custom = r#"
+        let x: number = 42;
+        print("The answer is: " + x);
+    "#;
+    
+    println!("Input:\n{}\n", custom);
+    match tokenize(custom) {
+        Ok(token_count) => {
+            println!("✅ Tokenized successfully ({} tokens)", token_count);
         }
         Err(e) => {
-            eprintln!("✗ Transpilation failed: {}", e);
+            eprintln!("❌ Error: {}", e);
         }
     }
     
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_main_runs() {
-        assert!(true);
-    }
+fn tokenize(source: &str) -> Result<usize, String> {
+    let mut lexer = Lexer::new(source);
+    let tokens = lexer.tokenize()?;
+    Ok(tokens.len())
 }

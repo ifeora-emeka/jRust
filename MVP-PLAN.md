@@ -12,21 +12,30 @@ Create a minimal viable product that supports basic jRust programs with function
 
 ## Development Steps (In Order)
 
-### Step 1: Lexer (Tokenization)
+### Step 1: Lexer (Tokenization) ✓ COMPLETED
 **Goal:** Convert jRust source code into tokens
 
 **Tasks:**
-- Implement token types: `let`, `function`, identifiers, literals (numbers, strings), operators (`+`, `=`, `:`, `;`), keywords (`return`, `void`)
-- Handle whitespace and comments
-- Create token struct with position info for error reporting
-- Write tests for valid and invalid tokens
+- ✓ Implement token types: `let`, `function`, identifiers, literals (numbers, strings), operators (`+`, `=`, `:`, `;`), keywords (`return`, `void`)
+- ✓ Handle whitespace and comments
+- ✓ Create token struct with position info for error reporting
+- ✓ Write tests for valid and invalid tokens
 
 **Input:** `let x: number = 42;`  
-**Output:** `[LET, IDENT("x"), COLON, TYPE("number"), EQUALS, NUMBER(42), SEMICOLON]`
+**Output:** `[LET, IDENT("x"), COLON, NumberType, EQUALS, NUMBER(42), SEMICOLON]`
 
-**Files to create:**
-- `crates/transpiler_core/src/lexer.rs`
-- `crates/transpiler_core/src/token.rs`
+**Files created:**
+- `crates/transpiler_core/src/lexer.rs` - Full lexer implementation with 13 tests
+- `crates/transpiler_core/src/token.rs` - Token types and struct
+
+**Implementation notes:**
+- Supports keywords: `let`, `const`, `function`, `return`, `void`, `print`, `mut`
+- Supports type keywords: `number`, `string`, `boolean`
+- Handles single-line comments (`// ...`)
+- Supports all required operators: arithmetic (`+`, `-`, `*`, `/`, `%`), comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`), logical (`&&`, `||`, `!`)
+- String escape sequences: `\n`, `\t`, `\r`, `\\`, `\"`
+- Line/column tracking for error reporting
+- All 13 lexer tests passing
 
 ---
 

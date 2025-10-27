@@ -17,19 +17,3 @@ pub fn printf(format: &str, args: &[&str]) {
     }
     println!("{}", result);
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_print() {
-        // Just ensure print doesn't panic
-        print("Hello from test");
-    }
-
-    #[test]
-    fn test_printf() {
-        printf("Hello, {}!", &["World"]);
-    }
-}

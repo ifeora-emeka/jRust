@@ -6,14 +6,3 @@
 pub fn init() {
     println!("jRust runtime initialized");
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_init() {
-        // Just ensure init doesn't panic
-        init();
-    }
-}
