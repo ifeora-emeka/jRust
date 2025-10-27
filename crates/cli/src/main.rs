@@ -1,67 +1,56 @@
-use jrust_transpiler_core::{Lexer, Parser, Codegen};
+mod project;
+mod commands;
+
+use clap::{Parser, Subcommand};
 use anyhow::Result;
 
+#[derive(Parser)]
+#[command(name = "jrust")]
+#[command(about = "jRust - TypeScript-like language that compiles to Rust", long_about = None)]
+#[command(version)]
+#[command(author = "jRust Contributors")]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// Initialize a new jRust project
+    Init {
+        /// Project name
+        name: String,
+    },
+    
+    /// Build a jRust program
+    Build {
+        /// Path to .jr file (optional, uses src/index.jr by default)
+        path: Option<String>,
+    },
+    
+    /// Run a jRust program
+    Run {
+        /// Path to .jr file (optional, uses src/index.jr by default)
+        path: Option<String>,
+    },
+    
+    /// Check syntax and types without generating code
+    Check {
+        /// Path to .jr file (optional, uses src/index.jr by default)
+        path: Option<String>,
+    },
+}
+
 fn main() -> Result<()> {
-    println!("=== jRust Transpiler Demo ===\n");
+    let cli = Cli::parse();
     
-    let examples = vec![
-        ("Variable Declaration", "let x: number = 42;"),
-        ("String Variable", "let name: string = \"Alice\";"),
-        ("Print Statement", "print(\"Hello, World!\");"),
-        ("String Concatenation", "print(\"Hello\" + \" \" + \"World\");"),
-        ("Const Declaration", "const MAX_SIZE: number = 100;"),
-    ];
-    
-    for (description, code) in examples {
-        println!("📝 {}", description);
-        println!("   Input:  {}", code);
-        
-        match transpile(code) {
-            Ok(rust_code) => {
-                println!("   Output: {}", rust_code.lines().next().unwrap_or(""));
-                println!("   ✅ Transpiled successfully\n");
-            }
-            Err(e) => {
-                eprintln!("   ❌ Error: {}\n", e);
-            }
-        }
-    }
-    
-    println!("=== Complex Program ===");
-    let complex = r#"
-        let x: number = 42;
-        const msg: string = "The answer is: ";
-        
-        function printAnswer(value: number): void {
-            print(msg + value);
-        }
-        
-        printAnswer(x);
-        print("Done");
-    "#;
-    
-    println!("Input:\n{}\n", complex);
-    match transpile(complex) {
-        Ok(rust_code) => {
-            println!("Output:\n{}\n", rust_code);
-            println!("✅ Transpiled successfully");
-        }
-        Err(e) => {
-            eprintln!("❌ Error: {}", e);
-        }
+    match cli.command {
+        Commands::Init { name } => commands::init::handle(name)?,
+        Commands::Build { path } => commands::build::handle(path)?,
+        Commands::Run { path } => commands::run::handle(path)?,
+        Commands::Check { path } => commands::check::handle(path)?,
     }
     
     Ok(())
 }
 
-fn transpile(source: &str) -> Result<String, String> {
-    let mut lexer = Lexer::new(source);
-    let tokens = lexer.tokenize()?;
-    let mut parser = Parser::new(tokens);
-    let program = parser.parse()?;
-    
-    let mut codegen = Codegen::new();
-    let rust_code = codegen.generate(&program);
-    
-    Ok(rust_code)
-}

@@ -1,8 +1,42 @@
 # jRust
 
-A Typescript-like programming language that bundles to rust.
+A Typescript-like programming language that compiles to Rust.
 
 Use Rust to build jRust and its compiler, create a language server for IDE support, and build a VS Code extension for syntax highlighting. You'll also need a lexer, parser, AST, transpiler, and packaging tools.
+
+## Quick Start
+
+### Installation
+
+```bash
+cargo install --path crates/cli --bin jrust
+```
+
+### Create Your First Project
+
+```bash
+jrust init hello-world
+cd hello-world
+jrust run
+```
+
+### Learn More
+
+- **[CLI Documentation](CLI.md)** - Complete CLI guide with examples
+- **[Getting Started](docs/02-get-started.md)** - Language tutorial
+- **[Variables & Types](docs/10-variables.md)** - Variable semantics
+- **[Language Spec](language-spec-and-architecture.md)** - Architecture overview
+
+### Development
+
+```bash
+make help          # Show development commands
+make test          # Run all tests
+make demo          # Run transpiler demo
+make cli-help      # Show CLI help
+```
+
+---
 
 # How To
 
@@ -117,8 +151,15 @@ You need:
 ### jRust Syntax Overview
 
 ```ts
-let x: int32 = 10;
+let x: number = 10;
+const MY_VAR: number = 5;
 function greet(name: string): void {
-  Console.log("Hello, " + name + "!");
+    print("Hello, " + name + "!");
 }
 ```
+
+Variables:
+- `let x: type = value;` — Mutable variable (generates `let mut x: RustType = value;`)
+- `const MY_VAR: type = value;` — Immutable constant with UPPERCASE naming (generates `const MY_VAR: RustType = value;`)
+- Note: jRust does not support the `mut` keyword. Mutability is determined by `const` (immutable) vs `let` (mutable)
+

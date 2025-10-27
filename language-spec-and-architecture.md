@@ -142,6 +142,3 @@ jrust/                        # repo root (Cargo workspace)
 * Allow `use crate::extern_crate("some_rust_crate")` syntax or an import macro to make adding Rust crates ergonomic.
 * Provide source maps / metadata that map generated Rust back to jRust lines for debugging.
 
----
-
-If you'd like, I can also scaffold a starter Cargo workspace (file tree + `Cargo.toml`s) for this exact structure, or generate a minimal `transpiler_core` parser prototype. Which would you like next?

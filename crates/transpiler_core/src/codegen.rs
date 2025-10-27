@@ -43,11 +43,12 @@ impl Codegen {
         
         if var_decl.is_const {
             self.output.push_str("const ");
+            self.output.push_str(&var_decl.name.to_uppercase());
         } else {
             self.output.push_str("let mut ");
+            self.output.push_str(&var_decl.name);
         }
         
-        self.output.push_str(&var_decl.name);
         self.output.push_str(": ");
         self.emit_type(&var_decl.var_type);
         self.output.push_str(" = ");

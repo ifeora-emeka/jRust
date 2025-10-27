@@ -79,16 +79,15 @@ crates/
 
 ## Token Types: Complete Reference
 
-### Keywords (7)
+### Keywords (6)
 | Token | Purpose |
 |-------|---------|
-| `Let` | Variable declaration |
-| `Const` | Constant declaration |
+| `Let` | Mutable variable declaration |
+| `Const` | Immutable constant declaration (must be UPPERCASE) |
 | `Function` | Function definition |
 | `Return` | Return statement |
 | `Void` | No return type |
 | `Print` | Output function |
-| `Mut` | Mutable reference |
 
 ### Type Keywords (3)
 | Token | Maps To |

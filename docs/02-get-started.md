@@ -91,46 +91,7 @@ The `jrust.json` file specifies your project configuration:
 
 The entry point transpiles to `/build/main.rs` for the underlying Rust project.
 
-## Project Commands
 
-### jnet Commands
-
-```bash
-# Create a new project
-jnet init <project-name>
-
-# Build the project (transpile + compile)
-jnet build
-
-# Run the project
-jnet start
-# or
-jnet run
-
-# Install dependencies
-jnet install <package-name>
-
-# Format code
-jnet fmt
-
-# Run tests
-jnet test
-```
-
-### Manual Compilation
-
-If you're not using jnet, you can use `jrust` directly:
-
-```bash
-# Transpile and run
-jrust run program.jr
-
-# Build (transpile + compile)
-jrust build program.jr
-
-# Just transpile (output Rust code)
-jrust transpile program.jr
-```
 
 ## Project Layout Example
 
