@@ -1,0 +1,20 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/compiler_core",
+    "crates/runtime",
+    "crates/std",
+    "crates/cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["jRust Contributors"]
+license = "MIT"
+repository = "https://github.com/ifeora-emeka/jRust"
+
+[workspace.dependencies]
+# Shared dependencies across the workspace
+anyhow = "1.0"
+thiserror = "1.0"

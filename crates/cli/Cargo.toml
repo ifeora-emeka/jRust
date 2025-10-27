@@ -1,0 +1,14 @@
+[package]
+name = "jrust"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "jrust"
+path = "src/main.rs"
+
+[dependencies]
+jrust_compiler_core = { path = "../compiler_core" }
+anyhow.workspace = true
