@@ -1,4 +1,4 @@
-use jrust_compiler_core::{greet, compile};
+use jrust_transpiler_core::{greet, transpile};
 use anyhow::Result;
 
 fn main() -> Result<()> {
@@ -6,15 +6,15 @@ fn main() -> Result<()> {
     
     greet("Developer");
     
-    println!("\nAttempting to compile sample code...");
-    match compile("fn main() { print(\"Hello, jRust!\"); }") {
+    println!("\nAttempting to transpile sample code...");
+    match transpile("fn main() { print(\"Hello, jRust!\"); }") {
         Ok(rust_code) => {
-            println!("\n✓ Compilation successful!");
+            println!("\n✓ Transpilation successful!");
             println!("\nGenerated Rust code:");
             println!("{}", rust_code);
         }
         Err(e) => {
-            eprintln!("✗ Compilation failed: {}", e);
+            eprintln!("✗ Transpilation failed: {}", e);
         }
     }
     

@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/compiler_core",
+    "crates/transpiler_core",
     "crates/runtime",
     "crates/std",
     "crates/cli",

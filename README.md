@@ -1,9 +1,11 @@
 # jRust
+
 A Typescript-like programming language that bundles to rust.
 
 Use Rust to build jRust and its compiler, create a language server for IDE support, and build a VS Code extension for syntax highlighting. You'll also need a lexer, parser, AST, transpiler, and packaging tools.
 
 # How To
+
 Nice — great idea. Short, clear plan below.
 
 # 1) Which implementation language?
@@ -21,8 +23,8 @@ Implement it in Rust (e.g. `tower-lsp`) so it can reuse your compiler/typechecke
 
 You need:
 
-* A **TextMate grammar** (`.tmLanguage.json`) *or* a **Tree-sitter grammar** (recommended for robust highlighting and parsing).
-* A small **VS Code extension** that registers the language, file extension(s), icons, snippets, and connects to your LSP server (language client).
+- A **TextMate grammar** (`.tmLanguage.json`) _or_ a **Tree-sitter grammar** (recommended for robust highlighting and parsing).
+- A small **VS Code extension** that registers the language, file extension(s), icons, snippets, and connects to your LSP server (language client).
   For semantic highlighting/errors you rely on the LSP.
 
 # 4) Complete list of things to build (components + notes)
@@ -35,8 +37,9 @@ You need:
 4. **Name resolution / symbol table** — resolves imports, scopes.
 5. **Type system / type checker** — strong typing rules. Choose:
 
-   * Explicit static types first (easier), or
-   * Gradual/Hindley–Milner type inference later.
+   - Explicit static types first (easier), or
+   - Gradual/Hindley–Milner type inference later.
+
 6. **Semantic checks** — borrow/ownership rules (if you want Rust-like safety), lifetime checks, generics constraints.
 7. **IR (optional)** — an intermediate form to simplify optimizations / codegen.
 8. **Code generator to Rust** — map AST/IR → Rust source. Produce readable Rust with source maps/comments for debugging.
@@ -93,30 +96,29 @@ You need:
 
 # Recommended crates / tools (Rust ecosystem)
 
-* Lexer: `logos`
-* Parser: `lalrpop` or `pest` or `nom` (choice depends on grammar complexity)
-* Pretty-printing / codegen: `rustfmt` (call after emitting), `prettyplease` or `rowan` for syntax trees if needed
-* LSP: `tower-lsp`
-* Tree-sitter: for advanced highlighting (generate grammar)
-* Testing: `insta` for snapshots, `cargo test`
-* Fuzzing: `cargo-fuzz`
-* CI: GitHub Actions (cross compilation), `cross` for cross builds
+- Lexer: `logos`
+- Parser: `lalrpop` or `pest` or `nom` (choice depends on grammar complexity)
+- Pretty-printing / codegen: `rustfmt` (call after emitting), `prettyplease` or `rowan` for syntax trees if needed
+- LSP: `tower-lsp`
+- Tree-sitter: for advanced highlighting (generate grammar)
+- Testing: `insta` for snapshots, `cargo test`
+- Fuzzing: `cargo-fuzz`
+- CI: GitHub Actions (cross compilation), `cross` for cross builds
 
 # Design advice / trade-offs
 
-* **Emit Rust**: simple and lets the Rust toolchain optimize for you. Use generated Rust as the single source of truth for performance builds.
-* **Interpreter + transpiler**: keep an interpreter for the REPL/playground (fast iteration) and a transpiler to Rust for production speed.
-* **Borrow checker**: replicating Rust's ownership system is hard. For v1, implement simpler memory model + GC or reference counting in your runtime; later introduce ownership-inspired static checks.
-* **Source maps**: invest early — debugging jRust will be unbearable without mapping to original source.
+- **Emit Rust**: simple and lets the Rust toolchain optimize for you. Use generated Rust as the single source of truth for performance builds.
+- **Interpreter + transpiler**: keep an interpreter for the REPL/playground (fast iteration) and a transpiler to Rust for production speed.
+- **Borrow checker**: replicating Rust's ownership system is hard. For v1, implement simpler memory model + GC or reference counting in your runtime; later introduce ownership-inspired static checks.
+- **Source maps**: invest early — debugging jRust will be unbearable without mapping to original source.
 
 ---
 
-If you want, I can:
+### jRust Syntax Overview
 
-* Draft a minimal grammar + parser prototype (Rust + `lalrpop`), or
-* Generate a starter `jrust` CLI layout and a VSCode extension scaffold.
-
-Which one first?
-
-
-
+```ts
+let x: int32 = 10;
+function greet(name: string): void {
+  Console.log("Hello, " + name + "!");
+}
+```

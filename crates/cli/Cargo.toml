@@ -10,5 +10,5 @@ name = "jrust"
 path = "src/main.rs"
 
 [dependencies]
-jrust_compiler_core = { path = "../compiler_core" }
+jrust_transpiler_core = { path = "../transpiler_core" }
 anyhow.workspace = true

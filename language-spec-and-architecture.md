@@ -25,15 +25,15 @@
 
 # High-level project architecture
 
-The project is organized as a Rust *workspace* with several crates and companion folders for editor tooling, docs, and examples. The architecture intentionally separates concerns so parts (LSP, CLI, compiler core, runtime) can be developed and released independently.
+The project is organized as a Rust *workspace* with several crates and companion folders for editor tooling, docs, and examples. The architecture intentionally separates concerns so parts (LSP, CLI, transpiler core, runtime) can be developed and released independently.
 
 **Top-level components:**
 
-* **crates/compiler_core** — lexer, parser, AST, type checker, semantic analysis, IR, and Rust code generator.
+* **crates/transpiler_core** — lexer, parser, AST, type checker, semantic analysis, IR, and Rust code generator.
 * **crates/runtime** — small runtime helpers (memory model if needed, basic GC/ARC, runtime panics, OS bindings) implemented in Rust.
 * **crates/std** — jRust standard library implemented as Rust crates (I/O, collections, concurrency, primitives).
 * **crates/cli** — `jrust` CLI (build, run, init, fmt, test) that orchestrates transpile → cargo.
-* **crates/lsp** — Language Server (LSP) implemented in Rust (reuses compiler_core for diagnostics & features).
+* **crates/lsp** — Language Server (LSP) implemented in Rust (reuses transpiler_core for diagnostics & features).
 * **editor/vscode** — VS Code extension (TextMate or Tree-sitter grammar, language client that connects to the LSP, snippets, icons).
 * **examples/** — sample projects and benchmarks.
 * **docs/** — language spec, tutorials, design notes.
@@ -50,7 +50,7 @@ jrust/                        # repo root (Cargo workspace)
 ├── LICENSE
 ├── rust-toolchain             # pinned rust toolchain for reproducible builds
 ├── crates/
-│   ├── compiler_core/         # core compiler crate
+│   ├── transpiler_core/         # core transpiler crate
 │   │   ├── Cargo.toml
 │   │   ├── src/
 │   │   │   ├── lib.rs
@@ -99,7 +99,7 @@ jrust/                        # repo root (Cargo workspace)
 
 # Short descriptions of important crates/folders
 
-* **compiler_core**: The brain. Implement lexing, parsing, AST with accurate source spans, name resolution, type checking, semantic analysis, and a Rust code generator. Keep the public API small so LSP and CLI can call into it easily.
+* **transpiler_core**: The brain. Implement lexing, parsing, AST with accurate source spans, name resolution, type checking, semantic analysis, and a Rust code generator. Keep the public API small so LSP and CLI can call into it easily.
 
 * **runtime**: Small Rust library that ships with jRust programs when necessary. It provides any required memory/runtime features not expressible in pure generated Rust (e.g., a lightweight GC, panic hooks, platform shims).
 
@@ -107,7 +107,7 @@ jrust/                        # repo root (Cargo workspace)
 
 * **cli**: Orchestrates workflows: `jrust build` (transpile + `cargo build`), `jrust run` (build + run), `jrust fmt` (format or call rustfmt on generated code), `jrust init` (scaffold project), `jrust test`.
 
-* **lsp**: Implements LSP endpoints (hover, completions, diagnostics, go-to-def) and reuses compiler_core for authoritative results.
+* **lsp**: Implements LSP endpoints (hover, completions, diagnostics, go-to-def) and reuses transpiler_core for authoritative results.
 
 * **editor/vscode**: Contains grammar for syntax highlighting, snippets, and the lightweight client that launches the LSP server.
 
@@ -116,7 +116,7 @@ jrust/                        # repo root (Cargo workspace)
 # Minimal MVP roadmap (short)
 
 1. Design a small, well-scoped grammar (expressions, functions, structs, modules, imports, basic control flow).
-2. Implement lexer + parser + AST in `compiler_core`.
+2. Implement lexer + parser + AST in `transpiler_core`.
 3. Implement type checker with explicit types (simple inference later).
 4. Implement Rust code generator (emit `.rs` + `Cargo.toml`).
 5. Implement CLI to transpile and call `cargo build` / `cargo run`.
@@ -144,4 +144,4 @@ jrust/                        # repo root (Cargo workspace)
 
 ---
 
-If you'd like, I can also scaffold a starter Cargo workspace (file tree + `Cargo.toml`s) for this exact structure, or generate a minimal `compiler_core` parser prototype. Which would you like next?
+If you'd like, I can also scaffold a starter Cargo workspace (file tree + `Cargo.toml`s) for this exact structure, or generate a minimal `transpiler_core` parser prototype. Which would you like next?

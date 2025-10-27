@@ -1,5 +1,5 @@
 [package]
-name = "jrust_compiler_core"
+name = "jrust_transpiler_core"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
