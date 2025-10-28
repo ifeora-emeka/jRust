@@ -27,6 +27,8 @@ impl Parser {
 
     fn parse_statement(&mut self) -> Result<Statement, String> {
         match &self.peek().kind {
+            TokenKind::Import => self.parse_import_stmt(),
+            TokenKind::Export => self.parse_export_stmt(),
             TokenKind::Let => self.parse_variable_decl(false),
             TokenKind::Const => self.parse_variable_decl(true),
             TokenKind::Function => self.parse_function_decl(),
@@ -47,6 +49,85 @@ impl Parser {
                 Ok(Statement::ExpressionStmt(expr))
             }
         }
+    }
+
+    fn parse_import_stmt(&mut self) -> Result<Statement, String> {
+        self.advance();
+        
+        let mut imports = Vec::new();
+        let path: String;
+        let is_external: bool;
+        
+        if self.check(&TokenKind::LeftBrace) {
+            self.advance();
+            loop {
+                let name = self.expect_identifier()?;
+                let alias = if self.match_token(&TokenKind::As) {
+                    Some(self.expect_identifier()?)
+                } else {
+                    None
+                };
+                imports.push(ImportItem { name, alias });
+                
+                if !self.match_token(&TokenKind::Comma) {
+                    break;
+                }
+            }
+            self.consume(TokenKind::RightBrace, "Expected '}' after import list")?;
+            self.consume(TokenKind::From, "Expected 'from' after import list")?;
+        } else if matches!(self.peek().kind, TokenKind::Identifier(_)) {
+            let name = self.expect_identifier()?;
+            
+            if self.match_token(&TokenKind::From) {
+                imports.push(ImportItem { name, alias: None });
+            } else {
+                return Err("Expected 'from' after import identifier".to_string());
+            }
+        } else if matches!(self.peek().kind, TokenKind::StringLiteral(_)) {
+        } else {
+            return Err("Expected '{', identifier, or string literal in import statement".to_string());
+        }
+        
+        if let TokenKind::StringLiteral(ref s) = self.peek().kind {
+            path = s.clone();
+            is_external = path.contains("::") || !path.starts_with('.');
+            self.advance();
+        } else {
+            return Err("Expected string literal for import path".to_string());
+        }
+        
+        let alias = if self.match_token(&TokenKind::As) {
+            Some(self.expect_identifier()?)
+        } else {
+            None
+        };
+        
+        if alias.is_some() && !imports.is_empty() {
+            imports[0].alias = alias;
+        }
+        
+        self.consume(TokenKind::Semicolon, "Expected ';' after import statement")?;
+        
+        Ok(Statement::ImportStmt(ImportStmt {
+            imports,
+            path,
+            is_external,
+        }))
+    }
+    
+    fn parse_export_stmt(&mut self) -> Result<Statement, String> {
+        self.advance();
+        
+        let inner_stmt = match &self.peek().kind {
+            TokenKind::Function => self.parse_function_decl()?,
+            TokenKind::Struct => self.parse_struct_decl()?,
+            TokenKind::Enum => self.parse_enum_decl()?,
+            TokenKind::Const => self.parse_variable_decl(true)?,
+            TokenKind::Let => self.parse_variable_decl(false)?,
+            _ => return Err("Expected function, struct, enum, const, or let after export".to_string()),
+        };
+        
+        Ok(Statement::ExportStmt(Box::new(inner_stmt)))
     }
 
     fn parse_variable_decl(&mut self, is_const: bool) -> Result<Statement, String> {

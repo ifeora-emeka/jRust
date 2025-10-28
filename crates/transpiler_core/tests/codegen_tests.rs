@@ -45,8 +45,8 @@ fn codegen_print_statement() {
 #[test]
 fn codegen_string_concatenation() {
     let rust_code = transpile(r#"print("Hello" + "World");"#);
-    assert!(rust_code.contains("to_string()"));
-    assert!(rust_code.contains("+"));
+    // String concatenation now uses format!()
+    assert!(rust_code.contains("format!"));
 }
 
 #[test]

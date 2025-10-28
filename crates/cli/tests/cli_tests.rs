@@ -124,20 +124,84 @@ fn test_init_creates_index_jr_template() {
         .assert()
         .success();
 
-    let index_jr_path = temp_dir.path().join(project_name).join("src/index.jr");
-    let content = fs::read_to_string(&index_jr_path).expect("Failed to read index.jr");
+    let project_path = temp_dir.path().join(project_name);
+    let index_jr_path = project_path.join("src/index.jr");
+    let utils_index_path = project_path.join("src/utils/index.jr");
+    let utils_random_path = project_path.join("src/utils/random.jr");
 
+    // Check files exist
     assert!(
-        content.contains("let name: string"),
-        "Template should have string variable"
+        index_jr_path.exists(),
+        "index.jr should exist"
+    );
+    assert!(
+        utils_index_path.exists(),
+        "utils/index.jr should exist"
+    );
+    assert!(
+        utils_random_path.exists(),
+        "utils/random.jr should exist"
+    );
+
+    // Check main index.jr content
+    let content = fs::read_to_string(&index_jr_path).expect("Failed to read index.jr");
+    assert!(
+        content.contains("struct User"),
+        "Template should have User struct"
+    );
+    assert!(
+        content.contains("import {HashMap} from \"std::collections\""),
+        "Template should have std import"
+    );
+    assert!(
+        content.contains("import {createId, getRandom, formatMessage, isValidAge, VERSION} from \"./utils\""),
+        "Template should import from utils"
+    );
+    assert!(
+        content.contains("export function"),
+        "Template should have export function"
+    );
+    assert!(
+        content.contains("export const"),
+        "Template should have export const"
     );
     assert!(
         content.contains("let numbers: number[]"),
         "Template should have number array"
     );
     assert!(
-        content.contains("for item in items"),
+        content.contains("for n in"),
         "Template should have for loop"
+    );
+    assert!(
+        content.contains("function main()"),
+        "Template should have main function"
+    );
+
+    // Check utils/index.jr content
+    let utils_content = fs::read_to_string(&utils_index_path).expect("Failed to read utils/index.jr");
+    assert!(
+        utils_content.contains("import {getRandomNumber, generateId, RANDOM_SEED} from \"./random\""),
+        "utils/index.jr should import from random"
+    );
+    assert!(
+        utils_content.contains("export function formatMessage"),
+        "utils/index.jr should have formatMessage"
+    );
+    assert!(
+        utils_content.contains("export function getRandom"),
+        "utils/index.jr should have getRandom wrapper"
+    );
+
+    // Check utils/random.jr content
+    let random_content = fs::read_to_string(&utils_random_path).expect("Failed to read utils/random.jr");
+    assert!(
+        random_content.contains("export function getRandomNumber"),
+        "utils/random.jr should have getRandomNumber"
+    );
+    assert!(
+        random_content.contains("export const RANDOM_SEED"),
+        "utils/random.jr should have RANDOM_SEED"
     );
 }
 
@@ -193,9 +257,7 @@ fn test_build_generates_executable() {
         .current_dir(&project_path)
         .assert()
         .success()
-        .stdout(predicate::str::contains("Lexical analysis passed"))
-        .stdout(predicate::str::contains("Syntax parsing passed"))
-        .stdout(predicate::str::contains("Code generation passed"))
+        .stdout(predicate::str::contains("All files compiled successfully"))
         .stdout(predicate::str::contains("Build completed successfully"));
 
     let executable_path = project_path.join("generated/target/release/jrust_app.exe");
@@ -214,22 +276,21 @@ fn test_build_custom_file() {
     let custom_file = project_path.join("src/custom.jr");
     fs::write(
         &custom_file,
-        r#"function greet(): void {
+        r#"export function greet(): void {
     print("Hello from custom file!");
 }
-
-greet();
 "#,
     )
     .expect("Failed to write custom file");
 
+    // Build now compiles all .jr files in the project
     Command::cargo_bin("jrust")
         .expect("Failed to find jrust binary")
         .arg("build")
-        .arg("src/custom.jr")
         .current_dir(&project_path)
         .assert()
         .success()
+        .stdout(predicate::str::contains("All files compiled successfully"))
         .stdout(predicate::str::contains("Build completed successfully"));
 }
 
@@ -256,23 +317,22 @@ fn test_run_custom_file() {
     let custom_file = project_path.join("src/greet.jr");
     fs::write(
         &custom_file,
-        r#"function sayHello(): void {
+        r#"export function sayHello(): void {
     print("Greetings from jRust!");
 }
-
-sayHello();
 "#,
     )
     .expect("Failed to write custom file");
 
+    // Run now compiles all .jr files and runs the generated executable
     Command::cargo_bin("jrust")
         .expect("Failed to find jrust binary")
         .arg("run")
-        .arg("src/greet.jr")
         .current_dir(&project_path)
         .assert()
         .success()
-        .stdout(predicate::str::contains("Greetings from jRust!"));
+        .stdout(predicate::str::contains("Welcome to"))
+        .stdout(predicate::str::contains("Program completed successfully"));
 }
 
 #[test]

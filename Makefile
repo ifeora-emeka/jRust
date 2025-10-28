@@ -1,14 +1,15 @@
-.PHONY: help test test-lexer test-parser test-codegen build check fmt fmt-check clippy clean demo cli-help cli-init cli-check cli-build cli-run
+.PHONY: help test test-lexer test-parser test-codegen test-init build check fmt fmt-check clippy clean demo cli-help cli-init cli-check cli-build cli-run
 
 help:
 	@echo "jRust Development Commands"
 	@echo "=========================="
 	@echo ""
 	@echo "Testing:"
-	@echo "  make test         - Run all tests (102 total)"
+	@echo "  make test         - Run all tests (114 total)"
 	@echo "  make test-lexer   - Run lexer tests only (19 tests)"
 	@echo "  make test-parser  - Run parser tests only (29 tests)"
 	@echo "  make test-codegen - Run codegen tests only (33 tests)"
+	@echo "  make test-init    - Test project initialization (e2e)"
 	@echo ""
 	@echo "Building:"
 	@echo "  make build        - Build all crates"
@@ -42,6 +43,10 @@ test-parser:
 
 test-codegen:
 	cargo test --test codegen_tests
+
+test-init:
+	@echo "Running end-to-end project initialization test..."
+	bash test-init.sh
 
 build:
 	cargo build --all

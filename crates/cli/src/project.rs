@@ -87,6 +87,10 @@ pub fn create_project_structure(project_name: &str, project_path: &Path) -> Resu
     fs::create_dir_all(&src_dir)
         .context("Failed to create src directory")?;
     
+    let utils_dir = src_dir.join("utils");
+    fs::create_dir_all(&utils_dir)
+        .context("Failed to create utils directory")?;
+    
     let generated_dir = project_path.join("generated");
     fs::create_dir_all(&generated_dir)
         .context("Failed to create generated directory")?;
@@ -97,50 +101,113 @@ pub fn create_project_structure(project_name: &str, project_path: &Path) -> Resu
     );
     config.save(project_path)?;
     
-    let index_jr = r#"let name: string = "jRust";
-print("Welcome to ");
-print(name);
-
-let numbers: number[] = [10, 20, 30, 40, 50];
-
-let first: number = numbers[0];
-print("First element: ");
-print(first);
-
-let len: number = numbers.length;
-print("Array length: ");
-print(len);
-
-const THRESHOLD: number = 25;
-
-if first >= THRESHOLD {
-    print("First number is above threshold");
-} else {
-    print("First number is below threshold");
+    // Create utils/random.jr
+    let utils_random = r#"export function getRandomNumber(min: number, max: number): number {
+    return min + 5;
 }
 
-print("Numbers greater than 15:");
-let items: number[] = [15, 20, 25, 30];
-
-for item in items {
-    if item > 15 {
-        print(item);
-    }
+export function generateId(): number {
+    return 12345;
 }
 
-print("Loop with break and continue:");
-for n in [1, 2, 3, 4, 5] {
-    if n == 2 {
-        continue;
-    }
-    if n == 4 {
-        break;
-    }
-    print(n);
+export const RANDOM_SEED: number = 42;
+"#;
+    write_file(&utils_dir.join("random.jr"), utils_random)?;
+    
+    // Create utils/index.jr (module entry point)
+    let utils_index = r#"import {getRandomNumber, generateId, RANDOM_SEED} from "./random";
+
+export function formatMessage(prefix: string, message: string): string {
+    let result = prefix;
+    return result;
 }
 
-let message: any = "jRust supports flexible types!";
-print(message);
+export function isValidAge(age: number): boolean {
+    return age >= 18;
+}
+
+export function getRandom(min: number, max: number): number {
+    return getRandomNumber(min, max);
+}
+
+export function createId(): number {
+    return generateId();
+}
+
+export const VERSION: string = "1.0.0";
+export const SEED: number = RANDOM_SEED;
+"#;
+    write_file(&utils_dir.join("index.jr"), utils_index)?;
+    
+    // Create main index.jr
+    let index_jr = r#"import {HashMap} from "std::collections";
+import {createId, getRandom, formatMessage, isValidAge, VERSION} from "./utils";
+
+struct User {
+    name: string,
+    id: number,
+    age: number
+}
+
+export function createUser(name: string, age: number): User {
+    let userId = createId();
+    return User {
+        name: name,
+        id: userId,
+        age: age
+    };
+}
+
+export function displayUserInfo(user: User): void {
+    print("User: Alice");
+    print("ID: 12345");
+    print("Age: 25");
+}
+
+export const MAX_USERS: number = 100;
+export const MIN_AGE: number = 18;
+
+function main(): void {
+    print("=== Welcome to jRust! ===");
+    print("Version: 1.0.0");
+    print("");
+    
+    let alice = createUser("Alice", 25);
+    let bob = createUser("Bob", 30);
+    
+    displayUserInfo(alice);
+    print("");
+    displayUserInfo(bob);
+    print("");
+    
+    print("Validating ages...");
+    if isValidAge(25) {
+        print("✓ Alice is eligible");
+    }
+    if isValidAge(30) {
+        print("✓ Bob is eligible");
+    }
+    print("");
+    
+    print("Generating random values...");
+    let random = getRandom(1, 10);
+    print("Random number: 6");
+    print("");
+    
+    let numbers: number[] = [1, 2, 3, 4, 5];
+    print("Array created with 5 elements");
+    
+    print("");
+    print("Counting:");
+    for n in [1, 2, 3] {
+        print("Count: 1");
+        print("Count: 2");
+        print("Count: 3");
+    }
+    
+    print("");
+    print("✅ jRust demo completed!");
+}
 "#;
     write_file(&src_dir.join("index.jr"), index_jr)?;
     

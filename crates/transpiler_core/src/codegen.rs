@@ -3,6 +3,7 @@ use crate::ast::*;
 pub struct Codegen {
     output: String,
     indent_level: usize,
+    is_main_file: bool,
 }
 
 impl Codegen {
@@ -10,22 +11,44 @@ impl Codegen {
         Codegen {
             output: String::new(),
             indent_level: 0,
+            is_main_file: true,
+        }
+    }
+    
+    pub fn new_module() -> Self {
+        Codegen {
+            output: String::new(),
+            indent_level: 0,
+            is_main_file: false,
         }
     }
 
     pub fn generate(&mut self, program: &Program) -> String {
-        self.emit_header();
+        // Check if there's a main function defined
+        let has_main = program.statements.iter().any(|stmt| {
+            matches!(stmt, Statement::FunctionDecl(func_decl) if func_decl.name == "main")
+        });
+        
+        // Only add main wrapper if this is the main file and no main is defined
+        if self.is_main_file && !has_main {
+            self.emit_header();
+        }
         
         for statement in &program.statements {
             self.generate_statement(statement);
         }
         
-        self.emit_main_if_needed();
+        if self.is_main_file && !has_main {
+            self.emit_main_if_needed();
+        }
+        
         self.output.clone()
     }
 
     fn generate_statement(&mut self, stmt: &Statement) {
         match stmt {
+            Statement::ImportStmt(import_stmt) => self.generate_import_stmt(import_stmt),
+            Statement::ExportStmt(inner) => self.generate_export_stmt(inner),
             Statement::VariableDecl(var_decl) => self.generate_variable_decl(var_decl),
             Statement::FunctionDecl(func_decl) => self.generate_function_decl(func_decl),
             Statement::StructDecl(struct_decl) => self.generate_struct_decl(struct_decl),
@@ -53,23 +76,236 @@ impl Codegen {
         }
     }
 
+    fn generate_import_stmt(&mut self, import_stmt: &ImportStmt) {
+        self.output.push_str("use ");
+        
+        if import_stmt.is_external {
+            let path = import_stmt.path.replace("::", "::");
+            
+            if import_stmt.imports.len() == 1 && import_stmt.imports[0].alias.is_none() {
+                self.output.push_str(&path);
+                self.output.push_str("::");
+                self.output.push_str(&import_stmt.imports[0].name);
+            } else if import_stmt.imports.len() == 1 {
+                self.output.push_str(&path);
+                self.output.push_str("::");
+                self.output.push_str(&import_stmt.imports[0].name);
+                if let Some(ref alias) = import_stmt.imports[0].alias {
+                    self.output.push_str(" as ");
+                    self.output.push_str(alias);
+                }
+            } else {
+                self.output.push_str(&path);
+                self.output.push_str("::{");
+                for (i, item) in import_stmt.imports.iter().enumerate() {
+                    if i > 0 {
+                        self.output.push_str(", ");
+                    }
+                    self.output.push_str(&item.name);
+                    if let Some(ref alias) = item.alias {
+                        self.output.push_str(" as ");
+                        self.output.push_str(alias);
+                    }
+                }
+                self.output.push('}');
+            }
+        } else {
+            // Local import - convert ./module 
+            // For main file: ./utils -> utils (sibling module)
+            // For module file: ./sibling -> super::sibling
+            let path = if import_stmt.path.starts_with("./") {
+                let module_path = import_stmt.path.trim_start_matches("./").replace("/", "::");
+                if self.is_main_file {
+                    module_path
+                } else {
+                    format!("super::{}", module_path)
+                }
+            } else {
+                import_stmt.path.replace("/", "::")
+            };
+            
+            if import_stmt.imports.len() == 1 {
+                self.output.push_str(&path);
+                self.output.push_str("::");
+                self.output.push_str(&import_stmt.imports[0].name);
+                if let Some(ref alias) = import_stmt.imports[0].alias {
+                    self.output.push_str(" as ");
+                    self.output.push_str(alias);
+                }
+            } else {
+                self.output.push_str(&path);
+                self.output.push_str("::{");
+                for (i, item) in import_stmt.imports.iter().enumerate() {
+                    if i > 0 {
+                        self.output.push_str(", ");
+                    }
+                    self.output.push_str(&item.name);
+                    if let Some(ref alias) = item.alias {
+                        self.output.push_str(" as ");
+                        self.output.push_str(alias);
+                    }
+                }
+                self.output.push('}');
+            }
+        }
+        
+        self.output.push_str(";\n");
+    }
+    
+    fn generate_export_stmt(&mut self, inner: &Statement) {
+        match inner {
+            Statement::FunctionDecl(func_decl) => {
+                self.emit_indent();
+                self.output.push_str("pub ");
+                self.output.push_str("fn ");
+                self.output.push_str(&func_decl.name);
+                self.output.push('(');
+                
+                for (i, param) in func_decl.parameters.iter().enumerate() {
+                    if i > 0 {
+                        self.output.push_str(", ");
+                    }
+                    self.output.push_str(&param.name);
+                    self.output.push_str(": ");
+                    self.emit_type(&param.param_type);
+                }
+                
+                self.output.push(')');
+                
+                if func_decl.return_type != Type::Void {
+                    self.output.push_str(" -> ");
+                    self.emit_type(&func_decl.return_type);
+                }
+                
+                self.output.push_str(" {\n");
+                self.indent_level += 1;
+                
+                for stmt in &func_decl.body {
+                    self.generate_statement(stmt);
+                }
+                
+                self.indent_level -= 1;
+                self.emit_indent();
+                self.output.push_str("}\n\n");
+            },
+            Statement::StructDecl(struct_decl) => {
+                self.emit_indent();
+                self.output.push_str("#[derive(Debug, Clone)]\n");
+                self.emit_indent();
+                self.output.push_str("pub struct ");
+                self.output.push_str(&struct_decl.name);
+                self.output.push_str(" {\n");
+                self.indent_level += 1;
+                
+                for field in &struct_decl.fields {
+                    self.emit_indent();
+                    self.output.push_str("pub ");
+                    self.output.push_str(&field.name);
+                    self.output.push_str(": ");
+                    self.emit_type(&field.field_type);
+                    self.output.push_str(",\n");
+                }
+                
+                self.indent_level -= 1;
+                self.emit_indent();
+                self.output.push_str("}\n\n");
+            },
+            Statement::EnumDecl(enum_decl) => {
+                self.emit_indent();
+                self.output.push_str("#[derive(Debug, Clone, PartialEq)]\n");
+                self.emit_indent();
+                self.output.push_str("pub enum ");
+                self.output.push_str(&enum_decl.name);
+                self.output.push_str(" {\n");
+                self.indent_level += 1;
+                
+                for variant in &enum_decl.variants {
+                    self.emit_indent();
+                    self.output.push_str(&variant.name);
+                    if let Some(ref fields) = variant.fields {
+                        if !fields.is_empty() {
+                            self.output.push('(');
+                            for (i, field_type) in fields.iter().enumerate() {
+                                if i > 0 {
+                                    self.output.push_str(", ");
+                                }
+                                self.emit_type(field_type);
+                            }
+                            self.output.push(')');
+                        }
+                    }
+                    self.output.push_str(",\n");
+                }
+                
+                self.indent_level -= 1;
+                self.emit_indent();
+                self.output.push_str("}\n\n");
+            },
+            Statement::VariableDecl(var_decl) => {
+                self.emit_indent();
+                self.output.push_str("pub ");
+                
+                if var_decl.is_const {
+                    self.output.push_str("const ");
+                    self.output.push_str(&var_decl.name.to_uppercase());
+                } else {
+                    self.output.push_str("static mut ");
+                    self.output.push_str(&var_decl.name);
+                }
+                
+                if let Some(var_type) = &var_decl.var_type {
+                    self.output.push_str(": ");
+                    if var_decl.is_const && *var_type == Type::String {
+                        self.output.push_str("&str");
+                    } else {
+                        self.emit_type(var_type);
+                    }
+                }
+                
+                self.output.push_str(" = ");
+                
+                if matches!(var_decl.value, Expression::StringLiteral(_)) {
+                    self.generate_expression(&var_decl.value);
+                } else {
+                    self.generate_expression(&var_decl.value);
+                }
+                
+                self.output.push_str(";\n");
+            },
+            _ => {}
+        }
+    }
+
     fn generate_variable_decl(&mut self, var_decl: &VariableDecl) {
         self.emit_indent();
         
         if var_decl.is_const {
             self.output.push_str("const ");
             self.output.push_str(&var_decl.name.to_uppercase());
+            
+            // Always require type for const
+            self.output.push_str(": ");
+            if let Some(var_type) = &var_decl.var_type {
+                if *var_type == Type::String {
+                    self.output.push_str("&str");
+                } else {
+                    self.emit_type(var_type);
+                }
+            } else {
+                // Infer type from value if not specified
+                match &var_decl.value {
+                    Expression::NumberLiteral(_) => self.output.push_str("i32"),
+                    Expression::StringLiteral(_) => self.output.push_str("&str"),
+                    Expression::BooleanLiteral(_) => self.output.push_str("bool"),
+                    _ => self.output.push_str("i32"), // default fallback
+                }
+            }
         } else {
             self.output.push_str("let mut ");
             self.output.push_str(&var_decl.name);
-        }
-        
-        if let Some(var_type) = &var_decl.var_type {
-            self.output.push_str(": ");
             
-            if var_decl.is_const && *var_type == Type::String {
-                self.output.push_str("&str");
-            } else {
+            if let Some(var_type) = &var_decl.var_type {
+                self.output.push_str(": ");
                 self.emit_type(var_type);
             }
         }
@@ -371,10 +607,40 @@ impl Codegen {
             Expression::BinaryOp(left, op, right) => {
                 match op {
                     BinaryOp::Add => {
-                        self.generate_expression(left);
-                        self.output.push_str(".to_string() + &");
-                        self.generate_expression(right);
-                        self.output.push_str(".to_string()");
+                        // Check if this is string concatenation
+                        let left_is_string = matches!(**left, Expression::StringLiteral(_));
+                        let right_is_string = matches!(**right, Expression::StringLiteral(_));
+                        
+                        if left_is_string || right_is_string {
+                            // String concatenation - check if we can flatten nested concatenations
+                            let mut parts = Vec::new();
+                            self.collect_string_parts(left, &mut parts);
+                            self.collect_string_parts(right, &mut parts);
+                            
+                            if parts.len() > 1 {
+                                // Use format! for multiple parts
+                                let format_str = "{}".repeat(parts.len());
+                                self.output.push_str(&format!("format!(\"{}\", ", format_str));
+                                for (i, _) in parts.iter().enumerate() {
+                                    if i > 0 {
+                                        self.output.push_str(", ");
+                                    }
+                                    self.generate_expression(&parts[i]);
+                                }
+                                self.output.push(')');
+                            } else {
+                                // Fallback to simple concatenation
+                                self.generate_expression(left);
+                                self.output.push_str(".to_string() + &");
+                                self.generate_expression(right);
+                                self.output.push_str(".to_string()");
+                            }
+                        } else {
+                            // Numeric addition
+                            self.generate_expression(left);
+                            self.output.push_str(" + ");
+                            self.generate_expression(right);
+                        }
                     }
                     _ => {
                         self.generate_expression(left);
@@ -392,7 +658,13 @@ impl Codegen {
                     if i > 0 {
                         self.output.push_str(", ");
                     }
-                    self.generate_expression(arg);
+                    // Convert string literals to String for function parameters
+                    if matches!(arg, Expression::StringLiteral(_)) {
+                        self.generate_expression(arg);
+                        self.output.push_str(".to_string()");
+                    } else {
+                        self.generate_expression(arg);
+                    }
                 }
                 self.output.push(')');
             }
@@ -621,5 +893,25 @@ impl Codegen {
     fn emit_main_if_needed(&mut self) {
         self.indent_level = 0;
         self.output.push_str("}\n");
+    }
+    
+    fn collect_string_parts<'a>(&self, expr: &'a Expression, parts: &mut Vec<&'a Expression>) {
+        match expr {
+            Expression::BinaryOp(left, BinaryOp::Add, right) => {
+                // Check if this is string concatenation
+                let left_is_string = matches!(**left, Expression::StringLiteral(_));
+                let right_is_string = matches!(**right, Expression::StringLiteral(_));
+                
+                if left_is_string || right_is_string {
+                    self.collect_string_parts(left, parts);
+                    self.collect_string_parts(right, parts);
+                } else {
+                    parts.push(expr);
+                }
+            }
+            _ => {
+                parts.push(expr);
+            }
+        }
     }
 }

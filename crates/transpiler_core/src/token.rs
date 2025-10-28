@@ -24,6 +24,9 @@ pub enum TokenKind {
     New,
     This,
     As,
+    Import,
+    From,
+    Export,
 
     NumberType,
     StringType,

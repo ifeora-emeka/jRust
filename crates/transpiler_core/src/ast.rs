@@ -6,6 +6,8 @@ pub struct Program {
 
 #[derive(Debug, Clone)]
 pub enum Statement {
+    ImportStmt(ImportStmt),
+    ExportStmt(Box<Statement>),
     VariableDecl(VariableDecl),
     FunctionDecl(FunctionDecl),
     StructDecl(StructDecl),
@@ -20,6 +22,19 @@ pub enum Statement {
     ContinueStmt,
     TryCatch(TryCatchStmt),
     ThrowStmt(ThrowStmt),
+}
+
+#[derive(Debug, Clone)]
+pub struct ImportStmt {
+    pub imports: Vec<ImportItem>,
+    pub path: String,
+    pub is_external: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct ImportItem {
+    pub name: String,
+    pub alias: Option<String>,
 }
 
 #[derive(Debug, Clone)]

@@ -22,7 +22,8 @@ Welcome to the jRust documentation! This guide will help you navigate all availa
 9. [Advanced Types](12-advanced-types.md) — Structs, enums, type inference
 10. [Array Methods](15-array-methods.md) — push, pop, map, filter, slice
 11. [String Methods](16-string-methods.md) — toUpperCase, substring, split
-12. [Error Handling](17-error-handling.md) — try/catch for robust code
+12. [Module System](16-module-system.md) — Import/Export, Rust stdlib interop
+13. [Error Handling](17-error-handling.md) — try/catch for robust code
 
 ### Deep Concepts (1 hour)
 13. [Ownership and Borrowing](07-ownership-and-borrowing.md) — Memory safety
