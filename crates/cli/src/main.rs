@@ -6,7 +6,7 @@ use anyhow::Result;
 
 #[derive(Parser)]
 #[command(name = "jrust")]
-#[command(about = "jRust - TypeScript-like language that compiles to Rust", long_about = None)]
+#[command(about = "jRust - Simple language that compiles to Rust", long_about = None)]
 #[command(version)]
 #[command(author = "jRust Contributors")]
 struct Cli {

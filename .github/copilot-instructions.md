@@ -6,7 +6,7 @@ Make sure to follow Rust's industry best practices.
 Always check the language-spec-and-architecture.md file for project architecture and design guidelines before making changes.
 Use the existing code style and conventions in the project.
 Always update the docs md files if there are changes to functionality or new features.
-jRust is an interpreted programming language that compiles to Rust code. jRust follows a TS-like syntax and is designed to be easy to learn and use.
+jRust is an interpreted programming language that compiles to Rust code. jRust follows a JavaScript-like syntax and is designed to be easy to learn and use.
 Remove the greet functions.
 Remove the greet functions.
 Move tests to different folders/files.

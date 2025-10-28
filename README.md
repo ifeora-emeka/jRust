@@ -1,20 +1,26 @@
 # jRust
 
-**A simple, elegant way to write Rust with TypeScript-like syntax.**
+**A simple, elegant way to write high-performance Rust code.**
 
 ## Why jRust?
 
 ### The Problem
 
-Rust is an incredibly powerful language with unmatched performance and memory safety guarantees. However, its learning curve can be steep, especially for developers coming from JavaScript/TypeScript backgrounds. Concepts like ownership, borrowing, lifetimes, and verbose syntax can feel overwhelming when you just want to build something fast.
+Rust is an incredibly powerful language with unmatched performance and memory safety guarantees. However, its learning curve can be steep. Concepts like ownership, borrowing, lifetimes, and verbose syntax can feel overwhelming when you just want to build something fast.
 
-Meanwhile, JavaScript/TypeScript developers are familiar with a clean, expressive syntax but often need better performance, type safety, and the ability to compile to native code for systems programming, CLI tools, or performance-critical applications.
+Meanwhile, many developers are familiar with clean, expressive syntax found in modern programming languages but need better performance, type safety, and the ability to compile to native code for systems programming, CLI tools, or performance-critical applications.
+
+The barrier to entry for Rust can prevent developers from leveraging its power for:
+- **High-performance CLI tools** that need to be fast and portable
+- **Systems programming** where native code is essential
+- **Performance-critical applications** that require blazing speed
+- **Cross-platform utilities** that compile to standalone binaries
 
 ### The Solution
 
 **jRust bridges this gap.** It's a strongly-typed language that:
 
-- **Looks and feels like TypeScript** - Familiar syntax for JS/TS developers with clean, readable code
+- **Uses familiar, readable syntax** - Clean, expressive code that's easy to understand and write
 - **Compiles to idiomatic Rust** - Get all the performance and safety benefits of Rust without writing Rust directly
 - **Generates native executables** - Your jRust code becomes fast, standalone binaries via the Rust toolchain
 - **Simplifies complexity** - No manual memory management, ownership annotations, or lifetime specifiers in your source code
@@ -22,7 +28,8 @@ Meanwhile, JavaScript/TypeScript developers are familiar with a clean, expressiv
 
 ### Who Is This For?
 
-- **JavaScript/TypeScript developers** who want native performance without learning Rust's complexity
+- **JavaScript/Node.js developers** who want native performance without learning Rust's complexity
+- **Python developers** looking for compiled, high-performance alternatives for production systems
 - **Rapid prototypers** who need fast, type-safe code without wrestling with ownership rules
 - **Systems programmers** who want a simpler syntax for building CLI tools and utilities
 - **Educators** teaching programming concepts with performance and safety in mind
@@ -33,7 +40,7 @@ Meanwhile, JavaScript/TypeScript developers are familiar with a clean, expressiv
 jRust isn't just a syntax sugar layer - it's a carefully designed transpilation pipeline that:
 
 1. **Transpiles to clean, idiomatic Rust code** (not FFI wrappers or runtime hacks)
-2. **Provides familiar TS-like features**: type inference, structs, enums, array/string methods
+2. **Provides familiar features**: type inference, structs, enums, array/string methods
 3. **Generates production-ready binaries** via `cargo` with full optimization
 4. **Maintains safety guarantees** through strong static typing
 5. **Supports Rust interop** - use any Rust crate directly in your jRust code
@@ -174,7 +181,7 @@ jrust run src/custom.jr
 
 ## Language Features
 
-jRust supports a rich set of features familiar to TypeScript developers:
+jRust supports a rich set of features with familiar syntax from modern programming languages:
 
 ### Type System
 
@@ -575,8 +582,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Acknowledgments
 
-- Inspired by TypeScript's developer-friendly syntax
-- Built with Rust's powerful toolchain
+- Designed with developer-friendly syntax for rapid adoption
+- Built with Rust's powerful toolchain for maximum performance
 - Thanks to all contributors who help make jRust better!
 
 ---
