@@ -301,17 +301,34 @@ for n in [1, 2, 3, 4, 5] {
 
 ### Arrays
 
+jRust supports both **dynamic arrays** (variable size) and **static arrays** (fixed size):
+
 ```javascript
-// Array declaration
+// Dynamic arrays (Vec<T>) - can grow/shrink
 let numbers: number[] = [1, 2, 3, 4, 5];
 let names: string[] = ["Alice", "Bob", "Charlie"];
 
+// Static arrays ([T; N]) - fixed size, stack-allocated
+let coords: number[number, 3] = [10, 20, 30];
+let rgb: number[number, 3] = [255, 128, 0];
+
 // Array indexing
 let first: number = numbers[0];
+let x: number = coords[0];
 
 // Array methods
 let length: number = numbers.length;
 ```
+
+**Use static arrays when:**
+- Size is known and fixed (RGB values, coordinates, etc.)
+- You want stack allocation for better performance
+- You need compile-time size guarantees
+
+**Use dynamic arrays when:**
+- Size changes at runtime
+- You need to add/remove elements
+- Working with collections of unknown size
 
 ### String Methods
 

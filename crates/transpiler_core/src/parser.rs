@@ -557,22 +557,33 @@ impl Parser {
         };
 
         if self.match_token(&TokenKind::LeftBracket) {
-            let size = if self.check(&TokenKind::RightBracket) {
-                None
-            } else {
+            if self.check(&TokenKind::RightBracket) {
+                self.advance();
+                return Ok(Type::Array {
+                    element_type: Box::new(base_type),
+                    size: None,
+                });
+            }
+
+            let element_type = self.parse_type()?;
+            
+            let size = if self.match_token(&TokenKind::Comma) {
                 match &self.peek().kind {
                     TokenKind::NumberLiteral(n) => {
                         let n = *n as usize;
                         self.advance();
                         Some(n)
                     }
-                    _ => return Err("Expected number for array size".to_string()),
+                    _ => return Err("Expected number literal for array size".to_string()),
                 }
+            } else {
+                None
             };
+
             self.consume(TokenKind::RightBracket, "Expected ']' after array type")?;
 
             Ok(Type::Array {
-                element_type: Box::new(base_type),
+                element_type: Box::new(element_type),
                 size,
             })
         } else {

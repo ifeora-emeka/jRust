@@ -1,3 +1,4 @@
+Create test jRust projects in the ./temp dir at the root of the repo.
 Don't add code comments.
 Don't add code comments.
 Don't add code comments.

@@ -1,30 +1,94 @@
 # Arrays
 
-Arrays store multiple values of the same type. This guide covers array creation, access, and manipulation.
+Arrays store multiple values of the same type. jRust supports both **dynamic arrays** (variable size) and **static arrays** (fixed size).
 
-## Creating Arrays
+## Array Types
 
-### Array Declaration
+### Dynamic Arrays
 
-Declare an array with the `[]` syntax:
+Dynamic arrays can grow and shrink at runtime. Use `Type[]` syntax:
 
-```typescript
+```javascript
 let numbers: number[] = [1, 2, 3, 4, 5];
 let names: string[] = ["Alice", "Bob", "Charlie"];
 let flags: boolean[] = [true, false, true];
 ```
 
+**Dynamic arrays compile to Rust's `Vec<T>` type**, providing heap allocation and dynamic sizing.
+
+### Static Arrays
+
+Static arrays have a fixed size determined at compile time. Use `Type[ElementType, Size]` syntax:
+
+```javascript
+let numbers: number[number, 5] = [1, 2, 3, 4, 5];
+let names: string[string, 3] = ["Alice", "Bob", "Charlie"];
+let flags: boolean[boolean, 2] = [true, false];
+```
+
+**Static arrays compile to Rust's `[T; N]` type**, providing stack allocation and compile-time size guarantees.
+
+### When to Use Each Type
+
+**Use Dynamic Arrays (`Type[]`) when:**
+- The size is unknown at compile time
+- You need to add or remove elements
+- You're working with collections that change size
+- Memory efficiency isn't critical
+
+**Use Static Arrays (`Type[Type, Size]`) when:**
+- The size is known and won't change
+- You want stack allocation (faster)
+- You need compile-time size guarantees
+- You're working with fixed-size data (coordinates, RGB values, etc.)
+
+## Creating Arrays
+
+### Dynamic Array Declaration
+
+Declare a dynamic array with the `[]` syntax:
+
+```javascript
+let numbers: number[] = [1, 2, 3, 4, 5];
+let names: string[] = ["Alice", "Bob", "Charlie"];
+let flags: boolean[] = [true, false, true];
+```
+
+### Static Array Declaration
+
+Declare a static array with `[Type, Size]` syntax:
+
+```javascript
+let numbers: number[number, 5] = [1, 2, 3, 4, 5];
+let coordinates: number[number, 3] = [10, 20, 30];
+let rgb: number[number, 3] = [255, 128, 0];
+```
+
+**Note:** The size must match the number of elements exactly, or you'll get a compile error.
+
 ### Empty Arrays
 
-```typescript
+```javascript
 let empty: number[] = [];
 ```
 
-### Array Literals
+**Note:** Empty static arrays don't make sense since size is fixed, so only use dynamic arrays for initially empty collections.
 
-```typescript
-let scores: number[] = [85, 90, 78, 92, 88];
-let colors: string[] = ["red", "green", "blue"];
+### Comparison Examples
+
+```javascript
+// Dynamic array (Vec<i32>) - can grow/shrink
+let dynamic: number[] = [1, 2, 3];
+
+// Static array ([i32; 3]) - fixed size
+let static: number[number, 3] = [1, 2, 3];
+```
+
+**Generated Rust code:**
+
+```rust
+let mut dynamic: Vec<i32> = vec![1, 2, 3];
+let mut static: [i32; 3] = [1, 2, 3];
 ```
 
 ## Accessing Elements
@@ -179,7 +243,62 @@ let sum: number = arr.reduce((a, b) => a + b, 0);
 
 ## Practical Examples
 
-### Sum of Numbers
+### Working with Static Arrays
+
+Static arrays are perfect for fixed-size data:
+
+```javascript
+// RGB color representation
+let red: number[number, 3] = [255, 0, 0];
+let green: number[number, 3] = [0, 255, 0];
+let blue: number[number, 3] = [0, 0, 255];
+
+function printColor(name: string, rgb: number[number, 3]): void {
+    print(name + " = RGB(" + rgb[0] + ", " + rgb[1] + ", " + rgb[2] + ")");
+}
+
+printColor("Red", red);
+printColor("Green", green);
+printColor("Blue", blue);
+```
+
+### 3D Coordinates
+
+```javascript
+let origin: number[number, 3] = [0, 0, 0];
+let pointA: number[number, 3] = [10, 20, 30];
+let pointB: number[number, 3] = [5, 15, 25];
+
+function distance(p1: number[number, 3], p2: number[number, 3]): number {
+    let dx = p2[0] - p1[0];
+    let dy = p2[1] - p1[1];
+    let dz = p2[2] - p1[2];
+    
+    return dx * dx + dy * dy + dz * dz;
+}
+```
+
+### Days of Week
+
+```javascript
+const DAYS: string[string, 7] = [
+    "Monday",
+    "Tuesday", 
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+];
+
+function printWeek(): void {
+    for day in DAYS {
+        print(day);
+    }
+}
+```
+
+### Sum of Numbers (Dynamic Array)
 
 ```typescript
 function sum(arr: number[]): number {
@@ -345,33 +464,45 @@ function main(): void {
 
 ## Best Practices
 
-1. **Use descriptive names** for arrays
-   ```typescript
+1. **Choose the right array type**
+   ```javascript
+   let dynamic: number[] = [1, 2, 3];              // ✓ When size changes
+   let static: number[number, 3] = [1, 2, 3];     // ✓ When size is fixed
+   ```
+
+2. **Use static arrays for known sizes** - They're faster and safer
+   ```javascript
+   let rgb: number[number, 3] = [255, 128, 0];    // ✓ Always 3 elements
+   let coords: number[number, 3] = [10, 20, 30];  // ✓ Always x, y, z
+   ```
+
+3. **Use descriptive names** for arrays
+   ```javascript
    let studentScores: number[] = [85, 90];   // ✓ Clear
    let s: number[] = [85, 90];               // ✗ Unclear
    ```
 
-2. **Check bounds** before accessing by index
-   ```typescript
+4. **Check bounds** before accessing by index
+   ```javascript
    if (index >= 0 && index < array.length) {
        print(array[index]);
    }
    ```
 
-3. **Use for loops** for iteration
-   ```typescript
+5. **Use for loops** for iteration
+   ```javascript
    for item in items {
        process(item);
    }
    ```
 
-4. **Pass arrays by reference** for efficiency
-   ```typescript
+6. **Pass arrays by reference** for efficiency
+   ```javascript
    function process(arr: &number[]): void { }
    ```
 
-5. **Keep arrays homogeneous** - same type for all elements
-   ```typescript
+7. **Keep arrays homogeneous** - same type for all elements
+   ```javascript
    let numbers: number[] = [1, 2, 3];  // ✓ All numbers
    ```
 

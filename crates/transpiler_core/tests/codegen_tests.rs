@@ -211,3 +211,30 @@ fn codegen_continue_in_while() {
     assert!(rust_code.contains("continue;"));
     assert!(rust_code.contains("while"));
 }
+
+#[test]
+fn codegen_dynamic_array() {
+    let rust_code = transpile("let nums: number[] = [1, 2, 3];");
+    assert!(rust_code.contains("let mut nums: Vec<i32>"));
+    assert!(rust_code.contains("vec![1, 2, 3]"));
+}
+
+#[test]
+fn codegen_static_array() {
+    let rust_code = transpile("let nums: number[number, 5] = [1, 2, 3, 4, 5];");
+    assert!(rust_code.contains("let mut nums: [i32; 5]"));
+    assert!(rust_code.contains("[1, 2, 3, 4, 5]"));
+}
+
+#[test]
+fn codegen_static_string_array() {
+    let rust_code = transpile(r#"let names: string[string, 3] = ["Alice", "Bob", "Charlie"];"#);
+    assert!(rust_code.contains("let mut names: [String; 3]"));
+}
+
+#[test]
+fn codegen_static_bool_array() {
+    let rust_code = transpile("let flags: boolean[boolean, 2] = [true, false];");
+    assert!(rust_code.contains("let mut flags: [bool; 2]"));
+    assert!(rust_code.contains("[true, false]"));
+}

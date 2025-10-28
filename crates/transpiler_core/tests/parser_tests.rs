@@ -295,3 +295,36 @@ fn parse_continue_statement() {
 
     assert_eq!(program.statements.len(), 1);
 }
+
+#[test]
+fn parse_dynamic_array() {
+    let input = "let nums: number[] = [1, 2, 3];";
+    let mut lexer = Lexer::new(input);
+    let tokens = lexer.tokenize().expect("Lexer failed");
+    let mut parser = Parser::new(tokens);
+    let program = parser.parse().expect("Parser failed");
+
+    assert_eq!(program.statements.len(), 1);
+}
+
+#[test]
+fn parse_static_array() {
+    let input = "let nums: number[number, 5] = [1, 2, 3, 4, 5];";
+    let mut lexer = Lexer::new(input);
+    let tokens = lexer.tokenize().expect("Lexer failed");
+    let mut parser = Parser::new(tokens);
+    let program = parser.parse().expect("Parser failed");
+
+    assert_eq!(program.statements.len(), 1);
+}
+
+#[test]
+fn parse_static_string_array() {
+    let input = r#"let names: string[string, 3] = ["Alice", "Bob", "Charlie"];"#;
+    let mut lexer = Lexer::new(input);
+    let tokens = lexer.tokenize().expect("Lexer failed");
+    let mut parser = Parser::new(tokens);
+    let program = parser.parse().expect("Parser failed");
+
+    assert_eq!(program.statements.len(), 1);
+}

@@ -83,9 +83,26 @@ impl Codegen {
             matches!(var_decl.value, Expression::StringLiteral(_))
         };
         
+        let is_static_array = if let Some(Type::Array { size: Some(_), .. }) = &var_decl.var_type {
+            matches!(var_decl.value, Expression::ArrayLiteral(_))
+        } else {
+            false
+        };
+        
         if needs_to_string {
             self.generate_expression(&var_decl.value);
             self.output.push_str(".to_string()");
+        } else if is_static_array {
+            if let Expression::ArrayLiteral(elements) = &var_decl.value {
+                self.output.push('[');
+                for (i, elem) in elements.iter().enumerate() {
+                    if i > 0 {
+                        self.output.push_str(", ");
+                    }
+                    self.generate_expression(elem);
+                }
+                self.output.push(']');
+            }
         } else {
             self.generate_expression(&var_decl.value);
         }
@@ -551,10 +568,18 @@ impl Codegen {
             Type::Boolean => self.output.push_str("bool"),
             Type::Void => self.output.push_str("()"),
             Type::Any => self.output.push_str("String"),
-            Type::Array { element_type, .. } => {
-                self.output.push_str("Vec<");
-                self.emit_type(element_type);
-                self.output.push('>');
+            Type::Array { element_type, size } => {
+                if let Some(size) = size {
+                    self.output.push('[');
+                    self.emit_type(element_type);
+                    self.output.push_str("; ");
+                    self.output.push_str(&size.to_string());
+                    self.output.push(']');
+                } else {
+                    self.output.push_str("Vec<");
+                    self.emit_type(element_type);
+                    self.output.push('>');
+                }
             }
             Type::Custom(name) => {
                 self.output.push_str(name);

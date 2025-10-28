@@ -128,6 +128,7 @@ If you know Rust:
 - while loops with conditions
 - break statements for loop exit
 - continue statements for loop iteration
+- **Dynamic arrays** (Vec<T>) and **static arrays** ([T; N]) with fixed size
 - Arrays with indexing and iteration
 - **Array methods:** push, pop, shift, unshift, slice, map, filter, reverse, sort, contains
 - **String methods:** toUpperCase, toLowerCase, substring, charAt, indexOf, trim, split, join
@@ -180,9 +181,17 @@ for (let i: number in range(0, 10)) {
 
 **Arrays:**
 ```javascript
+// Dynamic arrays (growable)
 let arr: number[] = [1, 2, 3];
+
+// Static arrays (fixed size)
+let fixed: number[number, 5] = [1, 2, 3, 4, 5];
+let rgb: number[number, 3] = [255, 128, 0];
+
+// Array access
 let first: number = arr[0];
 
+// Array iteration
 for (let item: number in arr) {
     print(item);
 }

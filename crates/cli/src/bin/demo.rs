@@ -13,6 +13,8 @@ fn main() -> Result<()> {
         ("Const Declaration", "const MAX_SIZE: number = 100;"),
         ("String Method", "let upper = \"hello\".toUpperCase();"),
         ("Array Method", "let len = [1, 2, 3].length;"),
+        ("Dynamic Array", "let nums: number[] = [1, 2, 3];"),
+        ("Static Array", "let fixed: number[number, 5] = [1, 2, 3, 4, 5];"),
     ];
     
     for (description, code) in examples {
@@ -47,6 +49,7 @@ fn main() -> Result<()> {
         let alice = User { name: "Alice", age: 30, active: true };
         
         let nums: number[] = [1, 2, 3, 4, 5];
+        let fixed: number[number, 3] = [10, 20, 30];
         const LIMIT: number = 3;
         
         function processNumbers(values: number[]): void {
