@@ -23,10 +23,16 @@ fn codegen_const_variable() {
 }
 
 #[test]
+fn codegen_const_string() {
+    let rust_code = transpile(r#"const GREETING: string = "Hello";"#);
+    assert!(rust_code.contains("const GREETING: &str = \"Hello\""));
+}
+
+#[test]
 fn codegen_string_variable() {
     let rust_code = transpile(r#"let name: string = "Alice";"#);
     assert!(rust_code.contains("let mut name: String"));
-    assert!(rust_code.contains("\"Alice\""));
+    assert!(rust_code.contains("\"Alice\".to_string()"));
 }
 
 #[test]
@@ -101,4 +107,107 @@ fn codegen_contains_main_wrapper() {
     let rust_code = transpile("let x: number = 1;");
     assert!(rust_code.starts_with("fn main()"));
     assert!(rust_code.trim_end().ends_with("}"));
+}
+
+#[test]
+fn codegen_if_statement() {
+    let rust_code = transpile("if x > 5 { print(\"big\"); }");
+    assert!(rust_code.contains("if x > 5"));
+    assert!(rust_code.contains("println!"));
+}
+
+#[test]
+fn codegen_if_else_statement() {
+    let rust_code = transpile("if x > 5 { print(\"big\"); } else { print(\"small\"); }");
+    assert!(rust_code.contains("if x > 5"));
+    assert!(rust_code.contains("} else {"));
+    assert!(rust_code.contains("println!"));
+}
+
+#[test]
+fn codegen_for_loop() {
+    let rust_code = transpile("for item in items { print(item); }");
+    assert!(rust_code.contains("for item in"));
+    assert!(rust_code.contains("println!"));
+}
+
+#[test]
+fn codegen_while_loop() {
+    let rust_code = transpile("while x < 10 { print(x); }");
+    assert!(rust_code.contains("while x < 10"));
+    assert!(rust_code.contains("println!"));
+}
+
+#[test]
+fn codegen_array_declaration() {
+    let rust_code = transpile("let nums: number[] = [1, 2, 3];");
+    assert!(rust_code.contains("let mut nums: Vec<i32>"));
+    assert!(rust_code.contains("vec![1, 2, 3]"));
+}
+
+#[test]
+fn codegen_array_indexing() {
+    let rust_code = transpile("let first: number = nums[0];");
+    assert!(rust_code.contains("nums[0]"));
+}
+
+#[test]
+fn codegen_member_access() {
+    let rust_code = transpile("let len: number = nums.length;");
+    assert!(rust_code.contains("nums.len() as i32"));
+}
+
+#[test]
+fn codegen_any_type() {
+    let rust_code = transpile("let value: any = 42;");
+    assert!(rust_code.contains("let mut value: String"));
+}
+
+#[test]
+fn codegen_string_array() {
+    let rust_code = transpile(r#"let strs: string[] = ["a", "b"];"#);
+    assert!(rust_code.contains("let mut strs: Vec<String>"));
+    assert!(rust_code.contains("vec!["));
+}
+
+#[test]
+fn codegen_nested_loops() {
+    let rust_code = transpile(r#"for i in outer { for j in inner { print(j); } }"#);
+    assert!(rust_code.contains("for i in"));
+    assert!(rust_code.contains("for j in"));
+}
+
+#[test]
+fn codegen_array_in_loop() {
+    let rust_code = transpile("for num in nums { print(num); }");
+    assert!(rust_code.contains("for num in nums"));
+    assert!(rust_code.contains("println!"));
+}
+
+#[test]
+fn codegen_break_statement() {
+    let rust_code = transpile("for i in items { break; }");
+    assert!(rust_code.contains("break;"));
+    assert!(rust_code.contains("for i in items"));
+}
+
+#[test]
+fn codegen_continue_statement() {
+    let rust_code = transpile("for i in items { continue; }");
+    assert!(rust_code.contains("continue;"));
+    assert!(rust_code.contains("for i in items"));
+}
+
+#[test]
+fn codegen_break_in_while() {
+    let rust_code = transpile("while condition { break; }");
+    assert!(rust_code.contains("break;"));
+    assert!(rust_code.contains("while"));
+}
+
+#[test]
+fn codegen_continue_in_while() {
+    let rust_code = transpile("while condition { continue; }");
+    assert!(rust_code.contains("continue;"));
+    assert!(rust_code.contains("while"));
 }

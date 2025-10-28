@@ -97,11 +97,50 @@ pub fn create_project_structure(project_name: &str, project_path: &Path) -> Resu
     );
     config.save(project_path)?;
     
-    let index_jr = r#"function greet(): void {
-    print("Hello from jRust!");
+    let index_jr = r#"let name: string = "jRust";
+print("Welcome to ");
+print(name);
+
+let numbers: number[] = [10, 20, 30, 40, 50];
+
+let first: number = numbers[0];
+print("First element: ");
+print(first);
+
+let len: number = numbers.length;
+print("Array length: ");
+print(len);
+
+const THRESHOLD: number = 25;
+
+if first >= THRESHOLD {
+    print("First number is above threshold");
+} else {
+    print("First number is below threshold");
 }
 
-greet();
+print("Numbers greater than 15:");
+let items: number[] = [15, 20, 25, 30];
+
+for item in items {
+    if item > 15 {
+        print(item);
+    }
+}
+
+print("Loop with break and continue:");
+for n in [1, 2, 3, 4, 5] {
+    if n == 2 {
+        continue;
+    }
+    if n == 4 {
+        break;
+    }
+    print(n);
+}
+
+let message: any = "jRust supports flexible types!";
+print(message);
 "#;
     write_file(&src_dir.join("index.jr"), index_jr)?;
     

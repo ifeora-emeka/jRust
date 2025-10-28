@@ -128,16 +128,16 @@ fn test_init_creates_index_jr_template() {
     let content = fs::read_to_string(&index_jr_path).expect("Failed to read index.jr");
 
     assert!(
-        content.contains("function main()"),
-        "Template should have main function"
+        content.contains("let name: string"),
+        "Template should have string variable"
     );
     assert!(
-        content.contains("print(\"Hello from jRust!\")"),
-        "Template should have hello world print"
+        content.contains("let numbers: number[]"),
+        "Template should have number array"
     );
     assert!(
-        content.contains("main()"),
-        "Template should call main function"
+        content.contains("for item in items"),
+        "Template should have for loop"
     );
 }
 
@@ -244,7 +244,7 @@ fn test_run_executes_program() {
         .current_dir(&project_path)
         .assert()
         .success()
-        .stdout(predicate::str::contains("Hello from jRust!"))
+        .stdout(predicate::str::contains("Welcome to"))
         .stdout(predicate::str::contains("Program completed successfully"));
 }
 
@@ -379,7 +379,7 @@ fn test_full_workflow() {
         .current_dir(&project_path)
         .assert()
         .success()
-        .stdout(predicate::str::contains("Hello from jRust!"));
+        .stdout(predicate::str::contains("Welcome to"));
 }
 
 #[test]

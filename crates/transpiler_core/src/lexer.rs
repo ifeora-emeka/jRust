@@ -93,6 +93,14 @@ impl Lexer {
                 self.advance();
                 Ok(Token::new(TokenKind::RightBrace, line, column))
             }
+            '[' => {
+                self.advance();
+                Ok(Token::new(TokenKind::LeftBracket, line, column))
+            }
+            ']' => {
+                self.advance();
+                Ok(Token::new(TokenKind::RightBracket, line, column))
+            }
             '&' => {
                 self.advance();
                 if self.current_char() == '&' {
@@ -172,6 +180,14 @@ impl Lexer {
             "void" => TokenKind::Void,
             "const" => TokenKind::Const,
             "print" => TokenKind::Print,
+            "if" => TokenKind::If,
+            "else" => TokenKind::Else,
+            "for" => TokenKind::For,
+            "while" => TokenKind::While,
+            "in" => TokenKind::In,
+            "any" => TokenKind::Any,
+            "break" => TokenKind::Break,
+            "continue" => TokenKind::Continue,
             "number" => TokenKind::NumberType,
             "string" => TokenKind::StringType,
             "boolean" => TokenKind::BooleanType,

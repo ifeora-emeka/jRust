@@ -242,6 +242,36 @@ function main(): void {
 }
 ```
 
+## Breaking Early
+
+Use `break` to exit a loop early:
+
+```typescript
+function findValue(arr: number[], target: number): void {
+    for item in arr {
+        if (item == target) {
+            print("Found!");
+            break;
+        }
+    }
+}
+```
+
+## Continuing to Next Iteration
+
+Use `continue` to skip to the next loop iteration:
+
+```typescript
+function printEvenNumbers(arr: number[]): void {
+    for num in arr {
+        if (num % 2 != 0 {
+            continue;
+        }
+        print(num);
+    }
+}
+```
+
 ## Coming Soon
 
 Future versions will support:
@@ -250,5 +280,8 @@ Future versions will support:
 - Named parameters
 - Closures and anonymous functions
 - Higher-order functions
+- String methods (length, substring, etc.)
+- Array methods (map, filter, reduce, etc.)
+- Type inference (automatic type detection)
 
 Next, learn about **[Comments](06-comments.md)** to document your code.

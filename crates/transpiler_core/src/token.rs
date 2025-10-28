@@ -6,6 +6,14 @@ pub enum TokenKind {
     Void,
     Const,
     Print,
+    If,
+    Else,
+    For,
+    While,
+    In,
+    Any,
+    Break,
+    Continue,
 
     NumberType,
     StringType,
@@ -30,6 +38,8 @@ pub enum TokenKind {
     RightParen,
     LeftBrace,
     RightBrace,
+    LeftBracket,
+    RightBracket,
 
     EqualEqual,
     BangEqual,

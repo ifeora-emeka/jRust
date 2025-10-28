@@ -22,10 +22,13 @@ jrust run
 
 ### Learn More
 
-- **[CLI Documentation](CLI.md)** - Complete CLI guide with examples
-- **[Getting Started](docs/02-get-started.md)** - Language tutorial
-- **[Variables & Types](docs/10-variables.md)** - Variable semantics
-- **[Language Spec](language-spec-and-architecture.md)** - Architecture overview
+- **[📚 Documentation Index](docs/00-index.md)** - Start here! Complete guide with learning paths
+- **[Getting Started](docs/02-get-started.md)** - Installation and first program
+- **[Language Features](docs/10-control-flow.md)** - Control flow guide (if/else, loops, break, continue)
+- **[Arrays Guide](docs/11-arrays.md)** - Array operations and iteration
+- **[Functions](docs/05-functions.md)** - Function declarations and calls
+- **[Language Spec](language-spec-and-architecture.md)** - Architecture and design details
+- **[Roadmap & Upcoming Features](docs/13-advanced.md)** - What's coming in future phases
 
 ### Development
 
@@ -153,10 +156,56 @@ You need:
 ```ts
 let x: number = 10;
 const MY_VAR: number = 5;
+
 function greet(name: string): void {
     print("Hello, " + name + "!");
 }
+
+let numbers: number[] = [1, 2, 3, 4, 5];
+for (let n: number in numbers) {
+    if (n % 2 == 0) {
+        print("Even: " + n);
+    }
+}
 ```
+
+### Current Features (Phase 3.1)
+
+✅ **Language Features:**
+- Variables and constants (`let`, `const`)
+- All primitive types (number, string, boolean, void, any)
+- User-defined functions with parameters and return types
+- Conditionals (if/else with multiple conditions)
+- Loops (for, while with full control)
+- Loop control (break, continue)
+- Arrays with indexing and iteration
+- String operations and concatenation
+- Comments (single and multi-line)
+
+✅ **Memory Safety:**
+- Ownership system
+- Immutable references (`&`)
+- Mutable references (`&mut`)
+- Borrowing rules enforced at compile time
+
+✅ **Tooling:**
+- CLI (`jrust build`, `jrust run`)
+- Project initialization (`jrust init`)
+- Transpilation to Rust
+- Automatic `rustfmt` formatting
+
+🚀 **Coming Soon (Phase 3.2-3.3):**
+- Type inference
+- String methods (toUpperCase, toLowerCase, etc.)
+- Array methods (map, filter, reduce, etc.)
+- Struct types for custom data
+- Enumerations
+- Error handling (try/catch)
+- Closures and lambda expressions
+
+See [Roadmap & Upcoming Features](docs/13-advanced.md) for details.
+
+### Variable & Type System
 
 Variables:
 - `let x: type = value;` — Mutable variable (generates `let mut x: RustType = value;`)

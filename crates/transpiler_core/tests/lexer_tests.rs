@@ -166,3 +166,79 @@ fn test_lexer_arithmetic_operators() {
     assert!(matches!(tokens[4].kind, TokenKind::Identifier(ref s) if s == "c"));
     assert_eq!(tokens[5].kind, TokenKind::Star);
 }
+
+#[test]
+fn test_lexer_if_else_keywords() {
+    let mut lexer = Lexer::new("if x > 5 { print(\"big\"); } else { print(\"small\"); }");
+    let tokens = lexer.tokenize().unwrap();
+
+    assert_eq!(tokens[0].kind, TokenKind::If);
+    assert!(matches!(tokens[1].kind, TokenKind::Identifier(ref s) if s == "x"));
+    assert_eq!(tokens[2].kind, TokenKind::Greater);
+    assert!(matches!(tokens[3].kind, TokenKind::NumberLiteral(5)));
+    assert_eq!(tokens[4].kind, TokenKind::LeftBrace);
+    assert_eq!(tokens[5].kind, TokenKind::Print);
+}
+
+#[test]
+fn test_lexer_for_while_loops() {
+    let mut lexer = Lexer::new("for i in items { } while x < 10 { }");
+    let tokens = lexer.tokenize().unwrap();
+
+    assert_eq!(tokens[0].kind, TokenKind::For);
+    assert!(matches!(tokens[1].kind, TokenKind::Identifier(ref s) if s == "i"));
+    assert_eq!(tokens[2].kind, TokenKind::In);
+    assert!(matches!(tokens[3].kind, TokenKind::Identifier(ref s) if s == "items"));
+    assert_eq!(tokens[4].kind, TokenKind::LeftBrace);
+    assert_eq!(tokens[5].kind, TokenKind::RightBrace);
+    assert_eq!(tokens[6].kind, TokenKind::While);
+}
+
+#[test]
+fn test_lexer_array_brackets() {
+    let mut lexer = Lexer::new("let nums: number[] = [1, 2, 3];");
+    let tokens = lexer.tokenize().unwrap();
+
+    assert_eq!(tokens[0].kind, TokenKind::Let);
+    assert!(matches!(tokens[1].kind, TokenKind::Identifier(ref s) if s == "nums"));
+    assert_eq!(tokens[2].kind, TokenKind::Colon);
+    assert_eq!(tokens[3].kind, TokenKind::NumberType);
+    assert_eq!(tokens[4].kind, TokenKind::LeftBracket);
+    assert_eq!(tokens[5].kind, TokenKind::RightBracket);
+    assert_eq!(tokens[6].kind, TokenKind::Equal);
+    assert_eq!(tokens[7].kind, TokenKind::LeftBracket);
+    assert!(matches!(tokens[8].kind, TokenKind::NumberLiteral(1)));
+    assert_eq!(tokens[9].kind, TokenKind::Comma);
+}
+
+#[test]
+fn test_lexer_any_type() {
+    let mut lexer = Lexer::new("let value: any = 42;");
+    let tokens = lexer.tokenize().unwrap();
+
+    assert_eq!(tokens[0].kind, TokenKind::Let);
+    assert!(matches!(tokens[1].kind, TokenKind::Identifier(ref s) if s == "value"));
+    assert_eq!(tokens[2].kind, TokenKind::Colon);
+    assert_eq!(tokens[3].kind, TokenKind::Any);
+    assert_eq!(tokens[4].kind, TokenKind::Equal);
+}
+
+#[test]
+fn test_lexer_break_keyword() {
+    let mut lexer = Lexer::new("break;");
+    let tokens = lexer.tokenize().unwrap();
+
+    assert_eq!(tokens[0].kind, TokenKind::Break);
+    assert_eq!(tokens[1].kind, TokenKind::Semicolon);
+    assert_eq!(tokens[2].kind, TokenKind::Eof);
+}
+
+#[test]
+fn test_lexer_continue_keyword() {
+    let mut lexer = Lexer::new("continue;");
+    let tokens = lexer.tokenize().unwrap();
+
+    assert_eq!(tokens[0].kind, TokenKind::Continue);
+    assert_eq!(tokens[1].kind, TokenKind::Semicolon);
+    assert_eq!(tokens[2].kind, TokenKind::Eof);
+}

@@ -32,6 +32,11 @@ impl Parser {
             TokenKind::Function => self.parse_function_decl(),
             TokenKind::Print => self.parse_print_stmt(),
             TokenKind::Return => self.parse_return_stmt(),
+            TokenKind::If => self.parse_if_else_stmt(),
+            TokenKind::For => self.parse_for_loop(),
+            TokenKind::While => self.parse_while_loop(),
+            TokenKind::Break => self.parse_break_stmt(),
+            TokenKind::Continue => self.parse_continue_stmt(),
             _ => {
                 let expr = self.parse_expression()?;
                 self.consume(TokenKind::Semicolon, "Expected ';' after statement")?;
@@ -125,8 +130,131 @@ impl Parser {
         Ok(Statement::ReturnStmt(ReturnStmt { value }))
     }
 
+    fn parse_if_else_stmt(&mut self) -> Result<Statement, String> {
+        self.advance();
+        let condition = self.parse_expression()?;
+        self.consume(TokenKind::LeftBrace, "Expected '{' after if condition")?;
+        let then_body = self.parse_block()?;
+        self.consume(TokenKind::RightBrace, "Expected '}' after if block")?;
+
+        let else_body = if self.match_token(&TokenKind::Else) {
+            self.consume(TokenKind::LeftBrace, "Expected '{' after else")?;
+            let block = self.parse_block()?;
+            self.consume(TokenKind::RightBrace, "Expected '}' after else block")?;
+            Some(block)
+        } else {
+            None
+        };
+
+        Ok(Statement::IfElse(IfElseStmt {
+            condition,
+            then_body,
+            else_body,
+        }))
+    }
+
+    fn parse_for_loop(&mut self) -> Result<Statement, String> {
+        self.advance();
+        let variable = self.expect_identifier()?;
+        self.consume(TokenKind::In, "Expected 'in' in for loop")?;
+        let iterable = self.parse_expression()?;
+        self.consume(TokenKind::LeftBrace, "Expected '{' after for condition")?;
+        let body = self.parse_block()?;
+        self.consume(TokenKind::RightBrace, "Expected '}' after for block")?;
+
+        Ok(Statement::ForLoop(ForLoopStmt {
+            variable,
+            iterable,
+            body,
+        }))
+    }
+
+    fn parse_while_loop(&mut self) -> Result<Statement, String> {
+        self.advance();
+        let condition = self.parse_expression()?;
+        self.consume(TokenKind::LeftBrace, "Expected '{' after while condition")?;
+        let body = self.parse_block()?;
+        self.consume(TokenKind::RightBrace, "Expected '}' after while block")?;
+
+        Ok(Statement::WhileLoop(WhileLoopStmt { condition, body }))
+    }
+
+    fn parse_break_stmt(&mut self) -> Result<Statement, String> {
+        self.advance();
+        self.consume(TokenKind::Semicolon, "Expected ';' after break")?;
+        Ok(Statement::BreakStmt)
+    }
+
+    fn parse_continue_stmt(&mut self) -> Result<Statement, String> {
+        self.advance();
+        self.consume(TokenKind::Semicolon, "Expected ';' after continue")?;
+        Ok(Statement::ContinueStmt)
+    }
+
+    fn parse_block(&mut self) -> Result<Vec<Statement>, String> {
+        let mut statements = Vec::new();
+
+        while !self.check(&TokenKind::RightBrace) && !self.is_at_end() {
+            statements.push(self.parse_statement()?);
+        }
+
+        Ok(statements)
+    }
+
     fn parse_expression(&mut self) -> Result<Expression, String> {
-        self.parse_additive()
+        self.parse_logical_or()
+    }
+
+    fn parse_logical_or(&mut self) -> Result<Expression, String> {
+        let mut expr = self.parse_logical_and()?;
+
+        while let Some(op) = self.match_binary_op(&[TokenKind::PipePipe]) {
+            let right = self.parse_logical_and()?;
+            expr = Expression::BinaryOp(
+                Box::new(expr),
+                op,
+                Box::new(right),
+            );
+        }
+
+        Ok(expr)
+    }
+
+    fn parse_logical_and(&mut self) -> Result<Expression, String> {
+        let mut expr = self.parse_comparison()?;
+
+        while let Some(op) = self.match_binary_op(&[TokenKind::AmpersandAmpersand]) {
+            let right = self.parse_comparison()?;
+            expr = Expression::BinaryOp(
+                Box::new(expr),
+                op,
+                Box::new(right),
+            );
+        }
+
+        Ok(expr)
+    }
+
+    fn parse_comparison(&mut self) -> Result<Expression, String> {
+        let mut expr = self.parse_additive()?;
+
+        while let Some(op) = self.match_binary_op(&[
+            TokenKind::EqualEqual,
+            TokenKind::BangEqual,
+            TokenKind::Greater,
+            TokenKind::GreaterEqual,
+            TokenKind::Less,
+            TokenKind::LessEqual,
+        ]) {
+            let right = self.parse_additive()?;
+            expr = Expression::BinaryOp(
+                Box::new(expr),
+                op,
+                Box::new(right),
+            );
+        }
+
+        Ok(expr)
     }
 
     fn parse_additive(&mut self) -> Result<Expression, String> {
@@ -166,14 +294,14 @@ impl Parser {
     fn parse_primary(&mut self) -> Result<Expression, String> {
         let token = self.peek();
 
-        match &token.kind {
+        let mut expr = match &token.kind {
             TokenKind::NumberLiteral(n) => {
                 self.advance();
-                Ok(Expression::NumberLiteral(*n))
+                Expression::NumberLiteral(*n)
             }
             TokenKind::StringLiteral(s) => {
                 self.advance();
-                Ok(Expression::StringLiteral(s.clone()))
+                Expression::StringLiteral(s.clone())
             }
             TokenKind::Identifier(name) => {
                 let name = name.clone();
@@ -190,43 +318,108 @@ impl Parser {
                         }
                     }
                     self.consume(TokenKind::RightParen, "Expected ')' after function arguments")?;
-                    Ok(Expression::FunctionCall(name, args))
+                    Expression::FunctionCall(name, args)
                 } else {
-                    Ok(Expression::Identifier(name))
+                    Expression::Identifier(name)
                 }
+            }
+            TokenKind::LeftBracket => {
+                self.advance();
+                let mut elements = Vec::new();
+                if !self.check(&TokenKind::RightBracket) {
+                    loop {
+                        elements.push(self.parse_expression()?);
+                        if !self.match_token(&TokenKind::Comma) {
+                            break;
+                        }
+                    }
+                }
+                self.consume(TokenKind::RightBracket, "Expected ']' after array elements")?;
+                Expression::ArrayLiteral(elements)
+            }
+            TokenKind::Bang => {
+                self.advance();
+                let expr = self.parse_primary()?;
+                Expression::BinaryOp(Box::new(Expression::BooleanLiteral(false)), BinaryOp::And, Box::new(expr))
             }
             TokenKind::LeftParen => {
                 self.advance();
                 let expr = self.parse_expression()?;
                 self.consume(TokenKind::RightParen, "Expected ')' after expression")?;
-                Ok(expr)
+                expr
             }
-            _ => Err(format!(
+            _ => return Err(format!(
                 "Unexpected token in expression: {:?}",
                 token.kind
             )),
+        };
+
+        while self.check(&TokenKind::LeftBracket) || self.check(&TokenKind::Dot) {
+            if self.match_token(&TokenKind::LeftBracket) {
+                let index = self.parse_expression()?;
+                self.consume(TokenKind::RightBracket, "Expected ']' after index")?;
+                expr = Expression::IndexAccess {
+                    object: Box::new(expr),
+                    index: Box::new(index),
+                };
+            } else if self.match_token(&TokenKind::Dot) {
+                let member = self.expect_identifier()?;
+                expr = Expression::MemberAccess {
+                    object: Box::new(expr),
+                    member,
+                };
+            }
         }
+
+        Ok(expr)
     }
 
     fn parse_type(&mut self) -> Result<Type, String> {
-        match &self.peek().kind {
+        let base_type = match &self.peek().kind {
             TokenKind::NumberType => {
                 self.advance();
-                Ok(Type::Number)
+                Type::Number
             }
             TokenKind::StringType => {
                 self.advance();
-                Ok(Type::String)
+                Type::String
             }
             TokenKind::BooleanType => {
                 self.advance();
-                Ok(Type::Boolean)
+                Type::Boolean
             }
             TokenKind::Void => {
                 self.advance();
-                Ok(Type::Void)
+                Type::Void
             }
-            _ => Err(format!("Expected type, found: {:?}", self.peek().kind)),
+            TokenKind::Any => {
+                self.advance();
+                Type::Any
+            }
+            _ => return Err(format!("Expected type, found: {:?}", self.peek().kind)),
+        };
+
+        if self.match_token(&TokenKind::LeftBracket) {
+            let size = if self.check(&TokenKind::RightBracket) {
+                None
+            } else {
+                match &self.peek().kind {
+                    TokenKind::NumberLiteral(n) => {
+                        let n = *n as usize;
+                        self.advance();
+                        Some(n)
+                    }
+                    _ => return Err("Expected number for array size".to_string()),
+                }
+            };
+            self.consume(TokenKind::RightBracket, "Expected ']' after array type")?;
+
+            Ok(Type::Array {
+                element_type: Box::new(base_type),
+                size,
+            })
+        } else {
+            Ok(base_type)
         }
     }
 
@@ -239,6 +432,14 @@ impl Parser {
                     TokenKind::Star => BinaryOp::Multiply,
                     TokenKind::Slash => BinaryOp::Divide,
                     TokenKind::Percent => BinaryOp::Modulo,
+                    TokenKind::EqualEqual => BinaryOp::Equal,
+                    TokenKind::BangEqual => BinaryOp::NotEqual,
+                    TokenKind::Greater => BinaryOp::Greater,
+                    TokenKind::GreaterEqual => BinaryOp::GreaterEqual,
+                    TokenKind::Less => BinaryOp::Less,
+                    TokenKind::LessEqual => BinaryOp::LessEqual,
+                    TokenKind::AmpersandAmpersand => BinaryOp::And,
+                    TokenKind::PipePipe => BinaryOp::Or,
                     _ => return None,
                 };
                 self.advance();

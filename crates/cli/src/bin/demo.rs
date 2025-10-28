@@ -27,17 +27,61 @@ fn main() -> Result<()> {
         }
     }
     
-    println!("=== Complex Program ===");
+    println!("=== Complex Program (All Phase 2 Features + Phase 3.1) ===");
     let complex = r#"
-        let x: number = 42;
-        const MSG: string = "The answer is: ";
+        let nums: number[] = [1, 2, 3, 4, 5];
+        const LIMIT: number = 3;
         
-        function printAnswer(value: number): void {
-            print(MSG + value);
+        function processNumbers(values: number[]): void {
+            print("Numbers greater than 2:");
+            
+            for n in values {
+                if n > 2 {
+                    print(n);
+                }
+            }
         }
         
-        printAnswer(x);
-        print("Done");
+        function getFirstElement(arr: number[]): number {
+            return arr[0];
+        }
+        
+        function getArrayLength(arr: number[]): number {
+            return arr.length;
+        }
+        
+        processNumbers(nums);
+        
+        let first: number = getFirstElement(nums);
+        print("First element: ");
+        print(first);
+        
+        let len: number = getArrayLength(nums);
+        print("Array length: ");
+        print(len);
+        
+        let x: number = 10;
+        let y: number = 20;
+        
+        if x < y {
+            print("x is less than y");
+        } else {
+            print("x is not less than y");
+        }
+        
+        print("Loop with break and continue:");
+        for item in [1, 2, 3, 4, 5, 6] {
+            if item == 2 {
+                continue;
+            }
+            if item == 5 {
+                break;
+            }
+            print(item);
+        }
+        
+        let mixed: any = "flexible type";
+        print(mixed);
     "#;
     
     println!("Input:\n{}\n", complex);
