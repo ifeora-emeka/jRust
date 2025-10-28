@@ -116,7 +116,7 @@ impl Lexer {
                     self.advance();
                     Ok(Token::new(TokenKind::PipePipe, line, column))
                 } else {
-                    Err(format!("Unexpected character '|' at line {}, column {}", line, column))
+                    Ok(Token::new(TokenKind::Pipe, line, column))
                 }
             }
             '!' => {
@@ -133,6 +133,9 @@ impl Lexer {
                 if self.current_char() == '=' {
                     self.advance();
                     Ok(Token::new(TokenKind::EqualEqual, line, column))
+                } else if self.current_char() == '>' {
+                    self.advance();
+                    Ok(Token::new(TokenKind::Arrow, line, column))
                 } else {
                     Ok(Token::new(TokenKind::Equal, line, column))
                 }
@@ -145,6 +148,10 @@ impl Lexer {
                 } else {
                     Ok(Token::new(TokenKind::Greater, line, column))
                 }
+            }
+            '?' => {
+                self.advance();
+                Ok(Token::new(TokenKind::Question, line, column))
             }
             '<' => {
                 self.advance();
@@ -188,6 +195,18 @@ impl Lexer {
             "any" => TokenKind::Any,
             "break" => TokenKind::Break,
             "continue" => TokenKind::Continue,
+            "struct" => TokenKind::Struct,
+            "enum" => TokenKind::Enum,
+            "type" => TokenKind::Type,
+            "interface" => TokenKind::Interface,
+            "try" => TokenKind::Try,
+            "catch" => TokenKind::Catch,
+            "throw" => TokenKind::Throw,
+            "new" => TokenKind::New,
+            "this" => TokenKind::This,
+            "as" => TokenKind::As,
+            "true" => TokenKind::BooleanLiteral(true),
+            "false" => TokenKind::BooleanLiteral(false),
             "number" => TokenKind::NumberType,
             "string" => TokenKind::StringType,
             "boolean" => TokenKind::BooleanType,

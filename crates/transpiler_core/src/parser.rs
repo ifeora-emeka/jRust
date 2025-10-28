@@ -30,6 +30,8 @@ impl Parser {
             TokenKind::Let => self.parse_variable_decl(false),
             TokenKind::Const => self.parse_variable_decl(true),
             TokenKind::Function => self.parse_function_decl(),
+            TokenKind::Struct => self.parse_struct_decl(),
+            TokenKind::Enum => self.parse_enum_decl(),
             TokenKind::Print => self.parse_print_stmt(),
             TokenKind::Return => self.parse_return_stmt(),
             TokenKind::If => self.parse_if_else_stmt(),
@@ -37,6 +39,8 @@ impl Parser {
             TokenKind::While => self.parse_while_loop(),
             TokenKind::Break => self.parse_break_stmt(),
             TokenKind::Continue => self.parse_continue_stmt(),
+            TokenKind::Try => self.parse_try_catch(),
+            TokenKind::Throw => self.parse_throw_stmt(),
             _ => {
                 let expr = self.parse_expression()?;
                 self.consume(TokenKind::Semicolon, "Expected ';' after statement")?;
@@ -48,8 +52,13 @@ impl Parser {
     fn parse_variable_decl(&mut self, is_const: bool) -> Result<Statement, String> {
         self.advance();
         let name = self.expect_identifier()?;
-        self.consume(TokenKind::Colon, "Expected ':' after variable name")?;
-        let var_type = self.parse_type()?;
+        
+        let var_type = if self.match_token(&TokenKind::Colon) {
+            Some(self.parse_type()?)
+        } else {
+            None
+        };
+        
         self.consume(TokenKind::Equal, "Expected '=' in variable declaration")?;
         let value = self.parse_expression()?;
         self.consume(TokenKind::Semicolon, "Expected ';' after variable declaration")?;
@@ -191,6 +200,108 @@ impl Parser {
         Ok(Statement::ContinueStmt)
     }
 
+    fn parse_struct_decl(&mut self) -> Result<Statement, String> {
+        self.advance();
+        let name = self.expect_identifier()?;
+        self.consume(TokenKind::LeftBrace, "Expected '{' after struct name")?;
+        
+        let mut fields = Vec::new();
+        while !self.check(&TokenKind::RightBrace) && !self.is_at_end() {
+            let field_name = self.expect_identifier()?;
+            self.consume(TokenKind::Colon, "Expected ':' after field name")?;
+            let field_type = self.parse_type()?;
+            
+            fields.push(StructField {
+                name: field_name,
+                field_type,
+            });
+            
+            if !self.match_token(&TokenKind::Comma) && !self.check(&TokenKind::RightBrace) {
+                return Err("Expected ',' or '}' after struct field".to_string());
+            }
+        }
+        
+        self.consume(TokenKind::RightBrace, "Expected '}' after struct fields")?;
+        
+        Ok(Statement::StructDecl(StructDecl { name, fields }))
+    }
+
+    fn parse_enum_decl(&mut self) -> Result<Statement, String> {
+        self.advance();
+        let name = self.expect_identifier()?;
+        self.consume(TokenKind::LeftBrace, "Expected '{' after enum name")?;
+        
+        let mut variants = Vec::new();
+        while !self.check(&TokenKind::RightBrace) && !self.is_at_end() {
+            let variant_name = self.expect_identifier()?;
+            
+            let fields = if self.match_token(&TokenKind::LeftParen) {
+                let mut field_types = Vec::new();
+                if !self.check(&TokenKind::RightParen) {
+                    loop {
+                        field_types.push(self.parse_type()?);
+                        if !self.match_token(&TokenKind::Comma) {
+                            break;
+                        }
+                    }
+                }
+                self.consume(TokenKind::RightParen, "Expected ')' after enum variant fields")?;
+                Some(field_types)
+            } else {
+                None
+            };
+            
+            variants.push(EnumVariant {
+                name: variant_name,
+                fields,
+            });
+            
+            if !self.match_token(&TokenKind::Comma) && !self.check(&TokenKind::RightBrace) {
+                return Err("Expected ',' or '}' after enum variant".to_string());
+            }
+        }
+        
+        self.consume(TokenKind::RightBrace, "Expected '}' after enum variants")?;
+        
+        Ok(Statement::EnumDecl(EnumDecl { name, variants }))
+    }
+
+    fn parse_try_catch(&mut self) -> Result<Statement, String> {
+        self.advance();
+        self.consume(TokenKind::LeftBrace, "Expected '{' after 'try'")?;
+        
+        let try_body = self.parse_block()?;
+        
+        self.consume(TokenKind::RightBrace, "Expected '}' after try block")?;
+        self.consume(TokenKind::Catch, "Expected 'catch' after try block")?;
+        
+        let catch_param = if self.match_token(&TokenKind::LeftParen) {
+            let param = Some(self.expect_identifier()?);
+            self.consume(TokenKind::RightParen, "Expected ')' after catch parameter")?;
+            param
+        } else {
+            None
+        };
+        
+        self.consume(TokenKind::LeftBrace, "Expected '{' after 'catch'")?;
+        let catch_body = self.parse_block()?;
+        self.consume(TokenKind::RightBrace, "Expected '}' after catch block")?;
+        
+        Ok(Statement::TryCatch(TryCatchStmt {
+            try_body,
+            catch_param,
+            catch_body,
+        }))
+    }
+
+    fn parse_throw_stmt(&mut self) -> Result<Statement, String> {
+        self.advance();
+        let expression = self.parse_expression()?;
+        self.consume(TokenKind::Semicolon, "Expected ';' after throw statement")?;
+        
+        Ok(Statement::ThrowStmt(ThrowStmt { expression }))
+    }
+
     fn parse_block(&mut self) -> Result<Vec<Statement>, String> {
         let mut statements = Vec::new();
 
@@ -303,6 +414,11 @@ impl Parser {
                 self.advance();
                 Expression::StringLiteral(s.clone())
             }
+            TokenKind::BooleanLiteral(b) => {
+                let val = *b;
+                self.advance();
+                Expression::BooleanLiteral(val)
+            }
             TokenKind::Identifier(name) => {
                 let name = name.clone();
                 self.advance();
@@ -319,6 +435,23 @@ impl Parser {
                     }
                     self.consume(TokenKind::RightParen, "Expected ')' after function arguments")?;
                     Expression::FunctionCall(name, args)
+                } else if self.check(&TokenKind::LeftBrace) && self.is_struct_literal_ahead() {
+                    self.advance();
+                    let mut fields = Vec::new();
+                    
+                    while !self.check(&TokenKind::RightBrace) && !self.is_at_end() {
+                        let field_name = self.expect_identifier()?;
+                        self.consume(TokenKind::Colon, "Expected ':' after field name")?;
+                        let field_value = self.parse_expression()?;
+                        fields.push((field_name, field_value));
+                        
+                        if !self.match_token(&TokenKind::Comma) {
+                            break;
+                        }
+                    }
+                    
+                    self.consume(TokenKind::RightBrace, "Expected '}' after struct literal")?;
+                    Expression::StructLiteral { name, fields }
                 } else {
                     Expression::Identifier(name)
                 }
@@ -364,10 +497,29 @@ impl Parser {
                 };
             } else if self.match_token(&TokenKind::Dot) {
                 let member = self.expect_identifier()?;
-                expr = Expression::MemberAccess {
-                    object: Box::new(expr),
-                    member,
-                };
+                
+                if self.match_token(&TokenKind::LeftParen) {
+                    let mut args = Vec::new();
+                    if !self.check(&TokenKind::RightParen) {
+                        loop {
+                            args.push(self.parse_expression()?);
+                            if !self.match_token(&TokenKind::Comma) {
+                                break;
+                            }
+                        }
+                    }
+                    self.consume(TokenKind::RightParen, "Expected ')' after method arguments")?;
+                    expr = Expression::MethodCall {
+                        object: Box::new(expr),
+                        method: member,
+                        arguments: args,
+                    };
+                } else {
+                    expr = Expression::MemberAccess {
+                        object: Box::new(expr),
+                        member,
+                    };
+                }
             }
         }
 
@@ -395,6 +547,11 @@ impl Parser {
             TokenKind::Any => {
                 self.advance();
                 Type::Any
+            }
+            TokenKind::Identifier(name) => {
+                let name = name.clone();
+                self.advance();
+                Type::Custom(name)
             }
             _ => return Err(format!("Expected type, found: {:?}", self.peek().kind)),
         };
@@ -503,6 +660,15 @@ impl Parser {
     }
 
     fn skip_newlines(&mut self) {
+    }
+
+    fn is_struct_literal_ahead(&self) -> bool {
+        if self.current + 1 >= self.tokens.len() {
+            return false;
+        }
+        
+        let next_token = &self.tokens[self.current + 1].kind;
+        matches!(next_token, TokenKind::Identifier(_) | TokenKind::RightBrace)
     }
 
     fn is_at_end(&self) -> bool {

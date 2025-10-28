@@ -166,7 +166,7 @@ fn parse_error_missing_semicolon() {
 
 #[test]
 fn parse_error_invalid_type() {
-    let input = "let x: invalid = 42;";
+    let input = "let x: 123 = 42;";
     let mut lexer = Lexer::new(input);
     let tokens = lexer.tokenize().expect("Lexer failed");
     let mut parser = Parser::new(tokens);

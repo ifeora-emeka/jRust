@@ -1,214 +1,592 @@
 # jRust
 
-A Typescript-like programming language that compiles to Rust.
+**A simple, elegant way to write Rust with TypeScript-like syntax.**
 
-Use Rust to build jRust and its compiler, create a language server for IDE support, and build a VS Code extension for syntax highlighting. You'll also need a lexer, parser, AST, transpiler, and packaging tools.
+## Why jRust?
+
+### The Problem
+
+Rust is an incredibly powerful language with unmatched performance and memory safety guarantees. However, its learning curve can be steep, especially for developers coming from JavaScript/TypeScript backgrounds. Concepts like ownership, borrowing, lifetimes, and verbose syntax can feel overwhelming when you just want to build something fast.
+
+Meanwhile, JavaScript/TypeScript developers are familiar with a clean, expressive syntax but often need better performance, type safety, and the ability to compile to native code for systems programming, CLI tools, or performance-critical applications.
+
+### The Solution
+
+**jRust bridges this gap.** It's a strongly-typed language that:
+
+- **Looks and feels like TypeScript** - Familiar syntax for JS/TS developers with clean, readable code
+- **Compiles to idiomatic Rust** - Get all the performance and safety benefits of Rust without writing Rust directly
+- **Generates native executables** - Your jRust code becomes fast, standalone binaries via the Rust toolchain
+- **Simplifies complexity** - No manual memory management, ownership annotations, or lifetime specifiers in your source code
+- **Enables rapid development** - Write less boilerplate, iterate faster, and focus on your application logic
+
+### Who Is This For?
+
+- **JavaScript/TypeScript developers** who want native performance without learning Rust's complexity
+- **Rapid prototypers** who need fast, type-safe code without wrestling with ownership rules
+- **Systems programmers** who want a simpler syntax for building CLI tools and utilities
+- **Educators** teaching programming concepts with performance and safety in mind
+- **Teams** that need Rust's benefits but want faster onboarding for new developers
+
+### What Makes jRust Different?
+
+jRust isn't just a syntax sugar layer - it's a carefully designed transpilation pipeline that:
+
+1. **Transpiles to clean, idiomatic Rust code** (not FFI wrappers or runtime hacks)
+2. **Provides familiar TS-like features**: type inference, structs, enums, array/string methods
+3. **Generates production-ready binaries** via `cargo` with full optimization
+4. **Maintains safety guarantees** through strong static typing
+5. **Supports Rust interop** - use any Rust crate directly in your jRust code
+
+---
 
 ## Quick Start
 
 ### Installation
 
+#### Prerequisites
+
+Before installing jRust, ensure you have the following installed on your system:
+
+1. **Rust Toolchain** (version 1.75.0 or later)
+   ```bash
+   # Install via rustup (recommended)
+   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+   
+   # Or on Windows, download from: https://rustup.rs/
+   
+   # Verify installation
+   rustc --version
+   cargo --version
+   ```
+
+2. **Git** (for cloning the repository)
+   ```bash
+   # Verify git is installed
+   git --version
+   ```
+
+#### Installing jRust
+
 ```bash
+# Clone the repository
+git clone https://github.com/ifeora-emeka/jRust.git
+cd jRust
+
+# Build and install the jRust CLI
 cargo install --path crates/cli --bin jrust
+
+# Verify installation
+jrust --version
 ```
 
-### Create Your First Project
+### Your First jRust Program
 
 ```bash
+# Create a new project
 jrust init hello-world
 cd hello-world
+
+# Run your program
 jrust run
 ```
 
-### Learn More
+This creates a project with a sample `src/index.jr` file that demonstrates jRust features.
 
-- **[📚 Documentation Index](docs/00-index.md)** - Start here! Complete guide with learning paths
-- **[Getting Started](docs/02-get-started.md)** - Installation and first program
-- **[Language Features](docs/10-control-flow.md)** - Control flow guide (if/else, loops, break, continue)
-- **[Arrays Guide](docs/11-arrays.md)** - Array operations and iteration
-- **[Functions](docs/05-functions.md)** - Function declarations and calls
-- **[Language Spec](language-spec-and-architecture.md)** - Architecture and design details
-- **[Roadmap & Upcoming Features](docs/13-advanced.md)** - What's coming in future phases
+---
 
-### Development
+## jRust CLI Commands
+
+The jRust CLI provides four core commands for managing your projects:
+
+### `jrust init <name>`
+
+**Initialize a new jRust project**
+
+Creates a complete project structure with all necessary configuration files.
 
 ```bash
-make help          # Show development commands
-make test          # Run all tests
-make demo          # Run transpiler demo
-make cli-help      # Show CLI help
+jrust init my-app
+```
+
+**Creates:**
+- `my-app/` - Project root directory
+- `src/index.jr` - Main entry point with example code
+- `jrust.toml` - Project configuration
+- `.gitignore` - Git ignore rules
+
+### `jrust check [path]`
+
+**Check syntax and types without building**
+
+Validates your jRust code for syntax errors and type correctness without generating Rust code or compiling.
+
+```bash
+# Check the default entry point (src/index.jr)
+jrust check
+
+# Check a specific file
+jrust check src/custom.jr
+```
+
+**Output:**
+- ✅ Lexical analysis passed
+- ✅ Syntax parsing passed
+- ✅ All checks passed!
+
+### `jrust build [path]`
+
+**Transpile and compile to native executable**
+
+Converts your jRust code to Rust, then compiles it to an optimized native binary.
+
+```bash
+# Build the default entry point
+jrust build
+
+# Build a specific file
+jrust build src/custom.jr
+```
+
+**Process:**
+1. Lexical analysis (tokenization)
+2. Syntax parsing (AST generation)
+3. Code generation (Rust output)
+4. Rust compilation (via `cargo`)
+
+**Output:** `generated/target/release/` - Optimized executable
+
+### `jrust run [path]`
+
+**Build and execute your program**
+
+Combines `build` and execution in one command - perfect for development.
+
+```bash
+# Run the default entry point
+jrust run
+
+# Run a specific file
+jrust run src/custom.jr
 ```
 
 ---
 
-# How To
+## Language Features
 
-Nice — great idea. Short, clear plan below.
+jRust supports a rich set of features familiar to TypeScript developers:
 
-# 1) Which implementation language?
+### Type System
 
-**Use Rust.**
-Reasons: fast, safe, great tooling (Cargo), easy to call `rustc`/`cargo` to produce OS executables, excellent crates for lexing/parsing/LSP, and you can reuse/emit idiomatic Rust as your backend target.
-(Alternatives: **Go** for faster dev speed; **C++** for max control but more complexity; **TS/Node** for prototyping only.)
+```javascript
+// Type inference
+let x = 42;                    // Inferred as number
+let name = "Alice";            // Inferred as string
+let active = true;             // Inferred as boolean
 
-# 2) Language Server?
+// Explicit types
+let age: number = 30;
+let message: string = "Hello";
+let items: number[] = [1, 2, 3];
 
-**Yes.** Build an LSP server (Diagnostics, Hover, Go-to-def, Completions, Formatting, References).
-Implement it in Rust (e.g. `tower-lsp`) so it can reuse your compiler/typechecker and produce precise diagnostics.
+// Any type (flexible typing)
+let flexible: any = "can be anything";
+```
 
-# 3) VS Code syntax highlighting
+### Variables and Constants
 
-You need:
+```javascript
+// Mutable variables
+let counter: number = 0;
+counter = counter + 1;
 
-- A **TextMate grammar** (`.tmLanguage.json`) _or_ a **Tree-sitter grammar** (recommended for robust highlighting and parsing).
-- A small **VS Code extension** that registers the language, file extension(s), icons, snippets, and connects to your LSP server (language client).
-  For semantic highlighting/errors you rely on the LSP.
+// Immutable constants (MUST be UPPERCASE)
+const MAX_SIZE: number = 100;
+const API_URL: string = "https://api.example.com";
+```
 
-# 4) Complete list of things to build (components + notes)
+### Functions
 
-## Core language & compiler/transpiler
+```javascript
+// Function with parameters and return type
+function add(a: number, b: number): number {
+    return a + b;
+}
 
-1. **Lexer** — tokenizes source. (Rust: `logos` or hand-rolled)
-2. **Parser** — builds AST. (Rust: `lalrpop`, `pest`, or `nom`)
-3. **AST representation** — typed Rust structs with source-span info.
-4. **Name resolution / symbol table** — resolves imports, scopes.
-5. **Type system / type checker** — strong typing rules. Choose:
-
-   - Explicit static types first (easier), or
-   - Gradual/Hindley–Milner type inference later.
-
-6. **Semantic checks** — borrow/ownership rules (if you want Rust-like safety), lifetime checks, generics constraints.
-7. **IR (optional)** — an intermediate form to simplify optimizations / codegen.
-8. **Code generator to Rust** — map AST/IR → Rust source. Produce readable Rust with source maps/comments for debugging.
-9. **Formatter / style** — either produce rustfmt-ready code or run `rustfmt` automatically on generated code.
-10. **Interpreter / REPL** — interpreted runtime for fast feedback (interpreting AST or small bytecode VM). Useful for playground and tests.
-11. **Runtime library (std)** — the standard library implemented in Rust (I/O, collections, concurrency, FFI wrappers) that your generated Rust links to.
-12. **Foreign function interface** — expose C/Rust interop if you need native OS APIs.
-13. **Error reporting & sourcemaps** — friendly errors tied to original jRust source.
-
-## Tooling & Build
-
-14. **Compiler CLI** (`jrustc`) — build, run, bundle flags (transpile → `cargo build --release`).
-15. **Project scaffolding / templates** (`jrust init`)
-16. **Package manager / dependency spec** (optional initially; could reuse Cargo by generating a `Cargo.toml`)
-17. **Cross-compilation support / packaging** — use Cargo/cross/GHActions to produce target OS executables.
-18. **Testing harness** — unit tests, integration tests, property tests (fuzzing).
-19. **Benchmarking** — perf tests against generated Rust.
-
-## IDE & Editor integration
-
-20. **LSP server** (see above) — diagnostics, completion, go-to-def, refactorings.
-21. **VSCode extension** — TextMate or Tree-sitter grammar, snippets, language client to your LSP, debugger support (DAP) later.
-22. **Formatter plugin** — integrate `jrust fmt` or `rustfmt` for generated code.
-23. **Language-aware formatter/linter** — static lints and style suggestions.
-
-## Debugging & runtime introspection
-
-24. **Source maps / mapping** from generated Rust back to jRust for stack traces.
-25. **Debug Adapter** (DAP) to allow stepping through jRust code in VSCode (can initially map to Rust debug info).
-
-## CI / Release / Docs / Community
-
-26. **CI pipelines** (tests, builds for multiple platforms).
-27. **Documentation site** with language spec, tutorials, examples.
-28. **Examples & stdlib docs** — show how to interop with Rust and use std features.
-29. **Package repo / registry** (optional later).
-30. **License, contribution guide, security policy**.
-
-## Quality / Safety / Maintenance
-
-31. **Fuzzing & property tests** (e.g. `cargo-fuzz`).
-32. **Benchmarks & regressions**.
-33. **Telemetry (optional)** for error reports (respect privacy).
-
-# Minimal **MVP** to start (priority)
-
-1. Lexer + Parser → AST.
-2. Simple typed language (explicit types) + type checker.
-3. Codegen to Rust (emit `.rs` + `Cargo.toml`), and run `cargo build` to produce exe.
-4. CLI (`jrust build` / `jrust run`) that automates rustfmt and cargo build.
-5. Basic error reporting (source spans).
-6. Small runtime stdlib in Rust.
-7. VSCode: TextMate grammar + extension that recognizes files. (LSP later)
-
-# Recommended crates / tools (Rust ecosystem)
-
-- Lexer: `logos`
-- Parser: `lalrpop` or `pest` or `nom` (choice depends on grammar complexity)
-- Pretty-printing / codegen: `rustfmt` (call after emitting), `prettyplease` or `rowan` for syntax trees if needed
-- LSP: `tower-lsp`
-- Tree-sitter: for advanced highlighting (generate grammar)
-- Testing: `insta` for snapshots, `cargo test`
-- Fuzzing: `cargo-fuzz`
-- CI: GitHub Actions (cross compilation), `cross` for cross builds
-
-# Design advice / trade-offs
-
-- **Emit Rust**: simple and lets the Rust toolchain optimize for you. Use generated Rust as the single source of truth for performance builds.
-- **Interpreter + transpiler**: keep an interpreter for the REPL/playground (fast iteration) and a transpiler to Rust for production speed.
-- **Borrow checker**: replicating Rust's ownership system is hard. For v1, implement simpler memory model + GC or reference counting in your runtime; later introduce ownership-inspired static checks.
-- **Source maps**: invest early — debugging jRust will be unbearable without mapping to original source.
-
----
-
-### jRust Syntax Overview
-
-```ts
-let x: number = 10;
-const MY_VAR: number = 5;
-
+// Void functions (no return value)
 function greet(name: string): void {
     print("Hello, " + name + "!");
 }
 
-let numbers: number[] = [1, 2, 3, 4, 5];
-for (let n: number in numbers) {
-    if (n % 2 == 0) {
-        print("Even: " + n);
-    }
+// Call functions
+let result: number = add(10, 20);
+greet("World");
+```
+
+### Structs (Record Types)
+
+```javascript
+// Define a struct
+struct User {
+    name: string,
+    age: number,
+    active: boolean
+}
+
+// Create struct instances
+let alice = User { 
+    name: "Alice", 
+    age: 30, 
+    active: true 
+};
+```
+
+### Enums
+
+```javascript
+// Simple enum
+enum Status {
+    Active,
+    Inactive,
+    Pending
+}
+
+// Enum with associated data
+enum Result {
+    Success(string),
+    Error(string)
 }
 ```
 
-### Current Features (Phase 3.1)
+### Control Flow
 
-✅ **Language Features:**
-- Variables and constants (`let`, `const`)
-- All primitive types (number, string, boolean, void, any)
-- User-defined functions with parameters and return types
-- Conditionals (if/else with multiple conditions)
-- Loops (for, while with full control)
-- Loop control (break, continue)
-- Arrays with indexing and iteration
-- String operations and concatenation
-- Comments (single and multi-line)
+```javascript
+// If-else statements
+if x > 10 {
+    print("Greater than 10");
+} else {
+    print("Less than or equal to 10");
+}
 
-✅ **Memory Safety:**
-- Ownership system
-- Immutable references (`&`)
-- Mutable references (`&mut`)
-- Borrowing rules enforced at compile time
+// For loops
+for item in [1, 2, 3, 4, 5] {
+    print(item);
+}
 
-✅ **Tooling:**
-- CLI (`jrust build`, `jrust run`)
-- Project initialization (`jrust init`)
-- Transpilation to Rust
-- Automatic `rustfmt` formatting
+// While loops
+let count = 0;
+while count < 5 {
+    print(count);
+    count = count + 1;
+}
 
-🚀 **Coming Soon (Phase 3.2-3.3):**
-- Type inference
-- String methods (toUpperCase, toLowerCase, etc.)
-- Array methods (map, filter, reduce, etc.)
-- Struct types for custom data
-- Enumerations
-- Error handling (try/catch)
-- Closures and lambda expressions
+// Break and continue
+for n in [1, 2, 3, 4, 5] {
+    if n == 2 {
+        continue;  // Skip 2
+    }
+    if n == 4 {
+        break;     // Stop at 4
+    }
+    print(n);      // Prints: 1, 3
+}
+```
 
-See [Roadmap & Upcoming Features](docs/13-advanced.md) for details.
+### Arrays
 
-### Variable & Type System
+```javascript
+// Array declaration
+let numbers: number[] = [1, 2, 3, 4, 5];
+let names: string[] = ["Alice", "Bob", "Charlie"];
 
-Variables:
-- `let x: type = value;` — Mutable variable (generates `let mut x: RustType = value;`)
-- `const MY_VAR: type = value;` — Immutable constant with UPPERCASE naming (generates `const MY_VAR: RustType = value;`)
-- Note: jRust does not support the `mut` keyword. Mutability is determined by `const` (immutable) vs `let` (mutable)
+// Array indexing
+let first: number = numbers[0];
 
+// Array methods
+let length: number = numbers.length;
+```
+
+### String Methods
+
+```javascript
+let text: string = "Hello, World!";
+
+// String methods
+let upper = text.toUpperCase();      // "HELLO, WORLD!"
+let lower = text.toLowerCase();      // "hello, world!"
+let sub = text.substring(0, 5);      // "Hello"
+let char = text.charAt(7);           // "W"
+let index = text.indexOf("World");   // 7
+```
+
+### Output
+
+```javascript
+// Print to console
+print("Hello, World!");
+print(42);
+print(variable);
+```
+
+---
+
+## Development Setup
+
+### For Contributors
+
+If you want to contribute to jRust development:
+
+#### 1. Clone and Build
+
+```bash
+git clone https://github.com/ifeora-emeka/jRust.git
+cd jRust
+
+# Build all crates
+cargo build --all
+```
+
+#### 2. Project Structure
+
+```
+jRust/
+├── crates/
+│   ├── transpiler_core/   # Lexer, parser, AST, codegen
+│   ├── cli/              # Command-line interface
+│   ├── runtime/          # Runtime library
+│   └── std/              # Standard library
+├── docs/                 # Documentation
+├── tests/               # Integration tests
+└── examples/            # Example programs
+```
+
+#### 3. Development Commands
+
+The project includes a `Makefile` for common development tasks:
+
+```bash
+# Run all tests (50+ tests)
+make test
+
+# Run specific test suites
+make test-lexer      # Lexer tests only
+make test-parser     # Parser tests only
+make test-codegen    # Code generation tests only
+
+# Build the project
+make build
+
+# Run the demo
+make demo
+
+# Code quality checks
+make fmt             # Format code
+make clippy          # Run linter
+
+# Clean build artifacts
+make clean
+```
+
+#### 4. Running Tests
+
+```bash
+# All tests
+cargo test --all
+
+# Specific crate tests
+cargo test -p jrust_transpiler_core
+cargo test -p jrust                    # CLI tests
+
+# Specific test
+cargo test test_parse_function_decl
+
+# With output
+cargo test -- --nocapture
+```
+
+#### 5. Development Workflow
+
+1. **Make changes** to the relevant crate (`transpiler_core`, `cli`, etc.)
+2. **Run tests** to ensure nothing breaks: `make test`
+3. **Format code**: `make fmt`
+4. **Run clippy**: `make clippy`
+5. **Test manually**: `make demo` or create a test `.jr` file
+6. **Commit changes** following conventional commits
+
+#### 6. Testing Your Changes
+
+```bash
+# Create a test jRust file
+cat > test.jr << 'EOF'
+let x: number = 42;
+print("The answer is:");
+print(x);
+EOF
+
+# Check syntax
+cargo run --bin jrust -- check test.jr
+
+# Build and run
+cargo run --bin jrust -- run test.jr
+```
+
+---
+
+## Documentation
+
+- **[📚 Full Documentation](docs/00-index.md)** - Complete language reference
+- **[🚀 Getting Started Guide](docs/02-get-started.md)** - Your first jRust program
+- **[📖 Language Specification](language-spec-and-architecture.md)** - Design and architecture
+- **[🏗️ Architecture Overview](ARCHITECTURE.md)** - Transpilation pipeline details
+
+### Key Documentation Topics
+
+- **Variables** - [Variable declarations and types](docs/03-variables.md)
+- **Functions** - [Function syntax and usage](docs/05-functions.md)
+- **Control Flow** - [If/else, loops, break/continue](docs/10-control-flow.md)
+- **Arrays** - [Array operations and methods](docs/11-arrays.md)
+- **Structs & Enums** - [Advanced types](docs/12-advanced-types.md)
+- **Array Methods** - [Comprehensive array API](docs/15-array-methods.md)
+- **String Methods** - [String manipulation](docs/16-string-methods.md)
+
+---
+
+## Example: Complete Program
+
+Here's a complete jRust program showcasing multiple features:
+
+```javascript
+// Define data structures
+struct User {
+    name: string,
+    age: number,
+    active: boolean
+}
+
+enum Role {
+    Admin,
+    User,
+    Guest
+}
+
+// Create user instance
+let alice = User { 
+    name: "Alice", 
+    age: 30, 
+    active: true 
+};
+
+// Function to process data
+function processUser(user: User): void {
+    print("Processing user: " + user.name);
+    
+    if user.active {
+        print("User is active");
+    } else {
+        print("User is inactive");
+    }
+}
+
+// Array operations
+let numbers: number[] = [1, 2, 3, 4, 5];
+let total = 0;
+
+for n in numbers {
+    total = total + n;
+}
+
+print("Total: ");
+print(total);
+
+// String methods
+let message: string = "Hello, jRust!";
+let upper = message.toUpperCase();
+print(upper);
+
+// Call function
+processUser(alice);
+```
+
+**This generates optimized Rust code and compiles to a native executable!**
+
+---
+
+## Roadmap
+
+### Current Status (Phase 3.2) ✅
+
+- ✅ Variables and constants
+- ✅ Functions with parameters and returns
+- ✅ Control flow (if/else, for, while, break, continue)
+- ✅ Arrays and array methods
+- ✅ String methods
+- ✅ Type inference
+- ✅ Structs (record types)
+- ✅ Enums with variants
+- ✅ Print statements
+
+### Coming Soon
+
+- 🚧 Classes and methods
+- 🚧 Generics
+- 🚧 Pattern matching
+- 🚧 Module system
+- 🚧 Error handling (try/catch)
+- 🚧 Async/await support
+- 🚧 FFI for calling Rust crates
+- 🚧 LSP for IDE support
+- 🚧 VS Code extension
+
+See [Advanced Topics](docs/13-advanced.md) for the complete roadmap.
+
+---
+
+## Contributing
+
+We welcome contributions! Whether it's:
+
+- 🐛 Bug reports
+- 💡 Feature suggestions
+- 📝 Documentation improvements
+- 🔧 Code contributions
+
+**Steps to contribute:**
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and test thoroughly
+4. Commit your changes: `git commit -m 'Add amazing feature'`
+5. Push to the branch: `git push origin feature/amazing-feature`
+6. Open a Pull Request
+
+**Before submitting:**
+- Run `make test` to ensure all tests pass
+- Run `make fmt` to format code
+- Run `make clippy` to check for common issues
+- Add tests for new features
+
+---
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## Acknowledgments
+
+- Inspired by TypeScript's developer-friendly syntax
+- Built with Rust's powerful toolchain
+- Thanks to all contributors who help make jRust better!
+
+---
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/ifeora-emeka/jRust/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/ifeora-emeka/jRust/discussions)
+- **Documentation**: [docs/00-index.md](docs/00-index.md)
+
+---
+
+**Start writing simpler, faster code today with jRust!** 🚀

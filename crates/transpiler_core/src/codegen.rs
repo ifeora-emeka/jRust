@@ -28,11 +28,15 @@ impl Codegen {
         match stmt {
             Statement::VariableDecl(var_decl) => self.generate_variable_decl(var_decl),
             Statement::FunctionDecl(func_decl) => self.generate_function_decl(func_decl),
+            Statement::StructDecl(struct_decl) => self.generate_struct_decl(struct_decl),
+            Statement::EnumDecl(enum_decl) => self.generate_enum_decl(enum_decl),
             Statement::PrintStmt(print_stmt) => self.generate_print_stmt(print_stmt),
             Statement::ReturnStmt(ret_stmt) => self.generate_return_stmt(ret_stmt),
             Statement::IfElse(if_else) => self.generate_if_else(if_else),
             Statement::ForLoop(for_loop) => self.generate_for_loop(for_loop),
             Statement::WhileLoop(while_loop) => self.generate_while_loop(while_loop),
+            Statement::TryCatch(try_catch) => self.generate_try_catch(try_catch),
+            Statement::ThrowStmt(throw_stmt) => self.generate_throw_stmt(throw_stmt),
             Statement::BreakStmt => {
                 self.emit_indent();
                 self.output.push_str("break;\n");
@@ -60,18 +64,24 @@ impl Codegen {
             self.output.push_str(&var_decl.name);
         }
         
-        self.output.push_str(": ");
-        
-        if var_decl.is_const && var_decl.var_type == Type::String {
-            self.output.push_str("&str");
-        } else {
-            self.emit_type(&var_decl.var_type);
+        if let Some(var_type) = &var_decl.var_type {
+            self.output.push_str(": ");
+            
+            if var_decl.is_const && *var_type == Type::String {
+                self.output.push_str("&str");
+            } else {
+                self.emit_type(var_type);
+            }
         }
         
         self.output.push_str(" = ");
         
-        let needs_to_string = matches!(var_decl.value, Expression::StringLiteral(_)) && 
-                              (var_decl.var_type == Type::String || var_decl.var_type == Type::Any);
+        let needs_to_string = if let Some(var_type) = &var_decl.var_type {
+            matches!(var_decl.value, Expression::StringLiteral(_)) && 
+            (*var_type == Type::String || *var_type == Type::Any)
+        } else {
+            matches!(var_decl.value, Expression::StringLiteral(_))
+        };
         
         if needs_to_string {
             self.generate_expression(&var_decl.value);
@@ -199,6 +209,109 @@ impl Codegen {
         self.output.push_str("}\n");
     }
 
+    fn generate_struct_decl(&mut self, struct_decl: &StructDecl) {
+        self.emit_indent();
+        self.output.push_str("#[derive(Debug, Clone)]\n");
+        self.emit_indent();
+        self.output.push_str("struct ");
+        self.output.push_str(&struct_decl.name);
+        self.output.push_str(" {\n");
+        
+        self.indent_level += 1;
+        for field in &struct_decl.fields {
+            self.emit_indent();
+            self.output.push_str(&field.name);
+            self.output.push_str(": ");
+            self.emit_type(&field.field_type);
+            self.output.push_str(",\n");
+        }
+        self.indent_level -= 1;
+        
+        self.emit_indent();
+        self.output.push_str("}\n\n");
+    }
+
+    fn generate_enum_decl(&mut self, enum_decl: &EnumDecl) {
+        self.emit_indent();
+        self.output.push_str("#[derive(Debug, Clone, PartialEq)]\n");
+        self.emit_indent();
+        self.output.push_str("enum ");
+        self.output.push_str(&enum_decl.name);
+        self.output.push_str(" {\n");
+        
+        self.indent_level += 1;
+        for variant in &enum_decl.variants {
+            self.emit_indent();
+            self.output.push_str(&variant.name);
+            
+            if let Some(fields) = &variant.fields {
+                self.output.push_str("(");
+                for (i, field_type) in fields.iter().enumerate() {
+                    if i > 0 {
+                        self.output.push_str(", ");
+                    }
+                    self.emit_type(field_type);
+                }
+                self.output.push_str(")");
+            }
+            
+            self.output.push_str(",\n");
+        }
+        self.indent_level -= 1;
+        
+        self.emit_indent();
+        self.output.push_str("}\n\n");
+    }
+
+    fn generate_try_catch(&mut self, try_catch: &TryCatchStmt) {
+        self.emit_indent();
+        self.output.push_str("match (|| -> Result<(), Box<dyn std::error::Error>> {\n");
+        
+        self.indent_level += 1;
+        for stmt in &try_catch.try_body {
+            self.generate_statement(stmt);
+        }
+        self.emit_indent();
+        self.output.push_str("Ok(())\n");
+        self.indent_level -= 1;
+        
+        self.emit_indent();
+        self.output.push_str("})() {\n");
+        
+        self.indent_level += 1;
+        self.emit_indent();
+        self.output.push_str("Ok(_) => {},\n");
+        self.emit_indent();
+        self.output.push_str("Err(");
+        if let Some(param) = &try_catch.catch_param {
+            self.output.push_str(param);
+        } else {
+            self.output.push_str("_err");
+        }
+        self.output.push_str(") => {\n");
+        
+        self.indent_level += 1;
+        for stmt in &try_catch.catch_body {
+            self.generate_statement(stmt);
+        }
+        self.indent_level -= 1;
+        
+        self.emit_indent();
+        self.output.push_str("}\n");
+        self.indent_level -= 1;
+        
+        self.emit_indent();
+        self.output.push_str("}\n");
+    }
+
+    fn generate_throw_stmt(&mut self, throw_stmt: &ThrowStmt) {
+        self.emit_indent();
+        self.output.push_str("panic!(\"{}\"");
+        self.output.push_str(", ");
+        self.generate_expression(&throw_stmt.expression);
+        self.output.push_str(");\n");
+    }
+
     fn generate_expression(&mut self, expr: &Expression) {
         match expr {
             Expression::NumberLiteral(n) => {
@@ -224,6 +337,19 @@ impl Codegen {
                     self.generate_expression(elem);
                 }
                 self.output.push(']');
+            }
+            Expression::StructLiteral { name, fields } => {
+                self.output.push_str(name);
+                self.output.push_str(" { ");
+                for (i, (field_name, field_value)) in fields.iter().enumerate() {
+                    if i > 0 {
+                        self.output.push_str(", ");
+                    }
+                    self.output.push_str(field_name);
+                    self.output.push_str(": ");
+                    self.generate_expression(field_value);
+                }
+                self.output.push_str(" }");
             }
             Expression::BinaryOp(left, op, right) => {
                 match op {
@@ -253,10 +379,157 @@ impl Codegen {
                 }
                 self.output.push(')');
             }
+            Expression::MethodCall { object, method, arguments } => {
+                self.generate_expression(object);
+                self.output.push('.');
+                
+                match method.as_str() {
+                    "push" => {
+                        self.output.push_str("push");
+                        self.output.push('(');
+                        for (i, arg) in arguments.iter().enumerate() {
+                            if i > 0 {
+                                self.output.push_str(", ");
+                            }
+                            self.generate_expression(arg);
+                        }
+                        self.output.push(')');
+                    }
+                    "pop" => {
+                        self.output.push_str("pop()");
+                    }
+                    "shift" => {
+                        self.output.push_str("remove(0)");
+                    }
+                    "unshift" => {
+                        self.output.push_str("insert(0, ");
+                        if !arguments.is_empty() {
+                            self.generate_expression(&arguments[0]);
+                        }
+                        self.output.push(')');
+                    }
+                    "slice" => {
+                        self.output.push('[');
+                        if arguments.len() >= 1 {
+                            self.generate_expression(&arguments[0]);
+                            self.output.push_str(" as usize");
+                        } else {
+                            self.output.push('0');
+                        }
+                        self.output.push_str("..");
+                        if arguments.len() >= 2 {
+                            self.generate_expression(&arguments[1]);
+                            self.output.push_str(" as usize");
+                        }
+                        self.output.push_str("].to_vec()");
+                    }
+                    "map" | "filter" => {
+                        self.output.push_str(method);
+                        self.output.push('(');
+                        for (i, arg) in arguments.iter().enumerate() {
+                            if i > 0 {
+                                self.output.push_str(", ");
+                            }
+                            self.generate_expression(arg);
+                        }
+                        self.output.push_str(").collect()");
+                    }
+                    "charAt" => {
+                        self.output.push_str("chars().nth(");
+                        if !arguments.is_empty() {
+                            self.generate_expression(&arguments[0]);
+                            self.output.push_str(" as usize");
+                        }
+                        self.output.push_str(").unwrap_or('\\0')");
+                    }
+                    "substring" => {
+                        self.output.push_str("chars().skip(");
+                        if arguments.len() >= 1 {
+                            self.generate_expression(&arguments[0]);
+                            self.output.push_str(" as usize");
+                        } else {
+                            self.output.push('0');
+                        }
+                        self.output.push_str(").take(");
+                        if arguments.len() >= 2 {
+                            self.output.push('(');
+                            self.generate_expression(&arguments[1]);
+                            self.output.push_str(" - ");
+                            if arguments.len() >= 1 {
+                                self.generate_expression(&arguments[0]);
+                            } else {
+                                self.output.push('0');
+                            }
+                            self.output.push_str(") as usize");
+                        } else {
+                            self.output.push_str("usize::MAX");
+                        }
+                        self.output.push_str(").collect::<String>()");
+                    }
+                    "indexOf" => {
+                        self.output.push_str("find(");
+                        if !arguments.is_empty() {
+                            self.generate_expression(&arguments[0]);
+                        }
+                        self.output.push_str(").map(|i| i as i32).unwrap_or(-1)");
+                    }
+                    "toUpperCase" => {
+                        self.output.push_str("to_uppercase()");
+                    }
+                    "toLowerCase" => {
+                        self.output.push_str("to_lowercase()");
+                    }
+                    "trim" => {
+                        self.output.push_str("trim().to_string()");
+                    }
+                    "split" => {
+                        self.output.push_str("split(");
+                        if !arguments.is_empty() {
+                            self.generate_expression(&arguments[0]);
+                        }
+                        self.output.push_str(").map(|s| s.to_string()).collect::<Vec<String>>()");
+                    }
+                    "join" => {
+                        self.output.push_str("join(");
+                        if !arguments.is_empty() {
+                            self.generate_expression(&arguments[0]);
+                        } else {
+                            self.output.push_str("\", \"");
+                        }
+                        self.output.push(')');
+                    }
+                    "reverse" => {
+                        self.output.push_str("iter().rev().cloned().collect::<Vec<_>>()");
+                    }
+                    "sort" => {
+                        self.output.push_str("sort()");
+                    }
+                    "includes" | "contains" => {
+                        self.output.push_str("contains(");
+                        if !arguments.is_empty() {
+                            self.output.push('&');
+                            self.generate_expression(&arguments[0]);
+                        }
+                        self.output.push(')');
+                    }
+                    _ => {
+                        self.output.push_str(method);
+                        self.output.push('(');
+                        for (i, arg) in arguments.iter().enumerate() {
+                            if i > 0 {
+                                self.output.push_str(", ");
+                            }
+                            self.generate_expression(arg);
+                        }
+                        self.output.push(')');
+                    }
+                }
+            }
             Expression::IndexAccess { object, index } => {
                 self.generate_expression(object);
                 self.output.push('[');
                 self.generate_expression(index);
+                self.output.push_str(" as usize");
                 self.output.push(']');
             }
             Expression::MemberAccess { object, member } => {
@@ -266,8 +539,6 @@ impl Codegen {
                     self.output.push_str("len() as i32");
                 } else {
                     self.output.push_str(member);
-                    self.output.push('(');
-                    self.output.push(')');
                 }
             }
         }
@@ -284,6 +555,11 @@ impl Codegen {
                 self.output.push_str("Vec<");
                 self.emit_type(element_type);
                 self.output.push('>');
+            }
+            Type::Custom(name) => {
+                self.output.push_str(name);
+            }
+            Type::Inferred => {
             }
         }
     }

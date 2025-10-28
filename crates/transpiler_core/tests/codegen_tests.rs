@@ -148,7 +148,7 @@ fn codegen_array_declaration() {
 #[test]
 fn codegen_array_indexing() {
     let rust_code = transpile("let first: number = nums[0];");
-    assert!(rust_code.contains("nums[0]"));
+    assert!(rust_code.contains("nums[0 as usize]"));
 }
 
 #[test]

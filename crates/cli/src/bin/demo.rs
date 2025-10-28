@@ -6,10 +6,13 @@ fn main() -> Result<()> {
     
     let examples = vec![
         ("Variable Declaration", "let x: number = 42;"),
+        ("Type Inference", "let x = 42;"),
         ("String Variable", "let name: string = \"Alice\";"),
         ("Print Statement", "print(\"Hello, World!\");"),
         ("String Concatenation", "print(\"Hello\" + \" \" + \"World\");"),
         ("Const Declaration", "const MAX_SIZE: number = 100;"),
+        ("String Method", "let upper = \"hello\".toUpperCase();"),
+        ("Array Method", "let len = [1, 2, 3].length;"),
     ];
     
     for (description, code) in examples {
@@ -27,8 +30,22 @@ fn main() -> Result<()> {
         }
     }
     
-    println!("=== Complex Program (All Phase 2 Features + Phase 3.1) ===");
+    println!("=== Complex Program (All Features: Phase 2 + Phase 3.1 + Phase 3.2) ===");
     let complex = r#"
+        struct User {
+            name: string,
+            age: number,
+            active: boolean
+        }
+        
+        enum Role {
+            Admin,
+            User,
+            Guest(string)
+        }
+        
+        let alice = User { name: "Alice", age: 30, active: true };
+        
         let nums: number[] = [1, 2, 3, 4, 5];
         const LIMIT: number = 3;
         
@@ -60,8 +77,8 @@ fn main() -> Result<()> {
         print("Array length: ");
         print(len);
         
-        let x: number = 10;
-        let y: number = 20;
+        let x = 10;
+        let y = 20;
         
         if x < y {
             print("x is less than y");
@@ -80,6 +97,13 @@ fn main() -> Result<()> {
             print(item);
         }
         
+        let message: string = "Hello, World!";
+        let upper = message.toUpperCase();
+        let lower = message.toLowerCase();
+        let sub = message.substring(0, 5);
+        print(upper);
+        print(sub);
+        
         let mixed: any = "flexible type";
         print(mixed);
     "#;
@@ -88,7 +112,14 @@ fn main() -> Result<()> {
     match transpile(complex) {
         Ok(rust_code) => {
             println!("Output:\n{}\n", rust_code);
-            println!("✅ Transpiled successfully");
+            println!("✅ Successfully transpiled complex program with ALL features!");
+            println!("   • Type inference (x, y, upper, lower, sub)");
+            println!("   • Structs (User)");
+            println!("   • Enums (Role with variants)");
+            println!("   • Array methods (length, indexing)");
+            println!("   • String methods (toUpperCase, toLowerCase, substring)");
+            println!("   • Functions, loops, conditionals");
+            println!("   • Constants, variables, break/continue");
         }
         Err(e) => {
             eprintln!("❌ Error: {}", e);

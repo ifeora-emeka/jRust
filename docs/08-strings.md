@@ -273,3 +273,293 @@ Future versions will support:
 - UTF-8 validation
 
 Next, learn about **[Output and Transpilation](09-output.md)**.
+
+# String Methods in jRust
+
+jRust provides comprehensive string manipulation methods that compile to efficient Rust string operations. These methods are familiar to JavaScript/TypeScript developers while leveraging Rust's string handling.
+
+## String Creation
+
+```typescript
+let message = "Hello, World!";
+let name = "Alice";
+let multiline = "Line 1
+Line 2
+Line 3";
+```
+
+## String Properties
+
+### length Property
+
+```typescript
+let text = "Hello";
+let len = text.length;
+```
+
+**Rust Output:**
+```rust
+let mut len = text.len() as i32;
+```
+
+## Case Conversion
+
+### toUpperCase() - Convert to Uppercase
+
+```typescript
+let upper = message.toUpperCase();
+```
+
+**Rust Output:**
+```rust
+let mut upper = message.to_uppercase();
+```
+
+### toLowerCase() - Convert to Lowercase
+
+```typescript
+let lower = message.toLowerCase();
+```
+
+**Rust Output:**
+```rust
+let mut lower = message.to_lowercase();
+```
+
+## Substring Operations
+
+### substring(start, end?) - Extract Substring
+
+```typescript
+let sub = text.substring(0, 5);
+let tail = text.substring(7);
+```
+
+**Rust Output:**
+```rust
+let mut sub = text.chars().skip(0 as usize).take((5 - 0) as usize).collect::<String>();
+let mut tail = text.chars().skip(7 as usize).take(usize::MAX).collect::<String>();
+```
+
+### charAt(index) - Get Character at Position
+
+```typescript
+let ch = text.charAt(0);
+```
+
+**Rust Output:**
+```rust
+let mut ch = text.chars().nth(0 as usize).unwrap_or('\0');
+```
+
+## Searching Methods
+
+### indexOf(substring) - Find Position
+
+```typescript
+let pos = text.indexOf("World");
+```
+
+**Rust Output:**
+```rust
+let mut pos = text.find("World").map(|i| i as i32).unwrap_or(-1);
+```
+
+Returns -1 if not found, otherwise the index position.
+
+## Trimming Methods
+
+### trim() - Remove Whitespace
+
+```typescript
+let trimmed = "  hello  ".trim();
+```
+
+**Rust Output:**
+```rust
+let mut trimmed = "  hello  ".trim().to_string();
+```
+
+## String Splitting and Joining
+
+### split(delimiter) - Split into Array
+
+```typescript
+let words = "apple,banana,orange".split(",");
+```
+
+**Rust Output:**
+```rust
+let mut words = "apple,banana,orange".split(",").map(|s| s.to_string()).collect::<Vec<String>>();
+```
+
+### join(delimiter) - Join Array Elements
+
+```typescript
+let arr = ["a", "b", "c"];
+let joined = arr.join("-");
+```
+
+**Rust Output:**
+```rust
+let mut joined = arr.join("-");
+```
+
+## Checking Methods
+
+### contains(substring) - Check if Contains
+
+```typescript
+let hasWorld = text.contains("World");
+```
+
+**Rust Output:**
+```rust
+let mut hasWorld = text.contains("World");
+```
+
+## Complete Examples
+
+### Text Processing
+
+```typescript
+let input = "  Hello, World!  ";
+let cleaned = input.trim();
+let upper = cleaned.toUpperCase();
+let lower = cleaned.toLowerCase();
+
+print(upper);
+print(lower);
+
+let len = cleaned.length;
+print("Length: ");
+print(len);
+```
+
+### String Analysis
+
+```typescript
+let sentence = "The quick brown fox jumps";
+let words = sentence.split(" ");
+let wordCount = words.length;
+
+print("Word count: ");
+print(wordCount);
+
+if sentence.contains("fox") {
+    print("Found fox!");
+}
+```
+
+### String Manipulation
+
+```typescript
+let original = "JavaScript";
+let first = original.charAt(0);
+let sub = original.substring(0, 4);
+let upper = sub.toUpperCase();
+
+print(upper);
+```
+
+### Search and Extract
+
+```typescript
+let email = "user@example.com";
+let atPos = email.indexOf("@");
+
+if atPos > 0 {
+    let username = email.substring(0, atPos);
+    print("Username: ");
+    print(username);
+}
+```
+
+## Method Reference Table
+
+| Method | Description | Returns | Example |
+|--------|-------------|---------|---------|
+| `length` | String length | number | `"hello".length` → 5 |
+| `toUpperCase()` | Convert to uppercase | string | `"hello".toUpperCase()` → "HELLO" |
+| `toLowerCase()` | Convert to lowercase | string | `"HELLO".toLowerCase()` → "hello" |
+| `substring(start, end?)` | Extract substring | string | `"hello".substring(0, 2)` → "he" |
+| `charAt(index)` | Get character | string | `"hello".charAt(0)` → "h" |
+| `indexOf(substring)` | Find position | number | `"hello".indexOf("ll")` → 2 |
+| `trim()` | Remove whitespace | string | `" hi ".trim()` → "hi" |
+| `split(delimiter)` | Split into array | string[] | `"a,b".split(",")` → ["a", "b"] |
+| `contains(substring)` | Check if contains | boolean | `"hello".contains("ll")` → true |
+
+## Advanced String Operations
+
+### String Concatenation
+
+```typescript
+let first = "Hello";
+let second = "World";
+let combined = first + " " + second;
+```
+
+### Template-like Strings
+
+```typescript
+let name = "Alice";
+let age = 25;
+let message = "Name: " + name + ", Age: " + age;
+print(message);
+```
+
+## Best Practices
+
+1. **Use `length` for string size** - Don't manually count characters
+2. **Check with `indexOf()` before extracting** - Avoid out-of-bounds errors
+3. **Use `trim()` on user input** - Remove unwanted whitespace
+4. **Prefer `contains()` for existence checks** - More readable than indexOf
+5. **Be mindful of Unicode** - Rust handles Unicode correctly
+
+## Performance Notes
+
+- String concatenation with `+` creates new strings
+- `charAt()` and `substring()` work with Unicode characters
+- `indexOf()` returns -1 if not found (check before using result)
+- `split()` creates a new array
+- Case conversion creates new strings
+
+## Common Patterns
+
+### Email Validation (Basic)
+
+```typescript
+let email = "user@example.com";
+if email.contains("@") {
+    let atPos = email.indexOf("@");
+    if atPos > 0 {
+        print("Valid email format");
+    }
+}
+```
+
+### Text Formatting
+
+```typescript
+let input = "  mixed CASE text  ";
+let formatted = input.trim().toLowerCase();
+print(formatted);
+```
+
+### Word Processing
+
+```typescript
+let text = "one two three";
+let words = text.split(" ");
+for word in words {
+    let capitalized = word.charAt(0).toUpperCase() + word.substring(1);
+    print(capitalized);
+}
+```
+
+## See Also
+
+- [Arrays Guide](11-arrays.md) - Array operations
+- [Array Methods](15-array-methods.md) - Array manipulation
+- [Variables](03-variables.md) - Variable declarations
+- [Primitive Types](04-primitive-types.md) - Basic types

@@ -18,13 +18,19 @@ Welcome to the jRust documentation! This guide will help you navigate all availa
 7. [Control Flow](10-control-flow.md) — if/else, loops, break, continue
 8. [Arrays](11-arrays.md) — Create, access, and iterate arrays
 
-### Advanced Concepts (30-45 minutes)
-9. [Ownership and Borrowing](07-ownership-and-borrowing.md) — Memory safety
-10. [Strings](08-strings.md) — String operations and concatenation
-11. [Output and Logging](09-output.md) — Print statements and logging
+### Advanced Features (2-3 hours)
+9. [Advanced Types](12-advanced-types.md) — Structs, enums, type inference
+10. [Array Methods](15-array-methods.md) — push, pop, map, filter, slice
+11. [String Methods](16-string-methods.md) — toUpperCase, substring, split
+12. [Error Handling](17-error-handling.md) — try/catch for robust code
+
+### Deep Concepts (1 hour)
+13. [Ownership and Borrowing](07-ownership-and-borrowing.md) — Memory safety
+14. [Strings](08-strings.md) — String operations and concatenation
+15. [Output and Logging](09-output.md) — Print statements and logging
 
 ### Future Features (Preview)
-12. [Advanced Topics](13-advanced.md) — Planned features and roadmap
+16. [Advanced Topics](13-advanced.md) — Planned features and roadmap
 
 ## Learning Paths
 
@@ -109,34 +115,35 @@ If you know Rust:
 
 ## Feature Coverage
 
-### Current Features (Phase 3.1)
+### Current Features (Phase 3.2) ✅
 
 ✅ **Fully Implemented:**
-- Variables and constants
+- Variables and constants with **type inference**
 - All primitive types (number, string, boolean, void, any)
+- **Struct types** for custom data structures
+- **Enumerations** with optional data
 - User-defined functions with parameters and returns
 - If/else conditionals
 - for loops with iteration
 - while loops with conditions
 - break statements for loop exit
-- continue statements for loop iteration skip
+- continue statements for loop iteration
 - Arrays with indexing and iteration
+- **Array methods:** push, pop, shift, unshift, slice, map, filter, reverse, sort, contains
+- **String methods:** toUpperCase, toLowerCase, substring, charAt, indexOf, trim, split, join
+- **Error handling:** try/catch blocks and throw statements
 - Ownership and borrowing (&, &mut)
 - String concatenation
 - Comments (single and multi-line)
-- Logging functions (print, print.error, print.info, print.warn, print.debug)
+- Logging functions (print)
 
-📋 **Coming Soon (Phase 3.2-3.3):**
-- Type inference
-- String methods (length, toUpperCase, etc.)
-- Array methods (map, filter, reduce, etc.)
+📋 **Coming Soon (Phase 3.3-4):**
 - Closures and lambda expressions
-- Struct types for custom data
-- Enumerations
-- Error handling (try/catch)
 - Pattern matching
-- Generics
+- Async/await support
 - Module system improvements
+- Generic types
+- Advanced error types
 
 ## Quick Reference
 
