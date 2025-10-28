@@ -1,5 +1,36 @@
 use crate::ast::*;
 
+fn to_snake_case(name: &str) -> String {
+    let mut result = String::new();
+    let mut prev_is_lower = false;
+    let mut chars = name.chars().peekable();
+    
+    while let Some(ch) = chars.next() {
+        if ch.is_uppercase() {
+            if prev_is_lower || (result.len() > 0 && chars.peek().map_or(false, |c| c.is_lowercase())) {
+                if result.len() > 0 {
+                    result.push('_');
+                }
+            }
+            result.push(ch.to_lowercase().next().unwrap());
+            prev_is_lower = false;
+        } else {
+            result.push(ch);
+            prev_is_lower = ch.is_lowercase();
+        }
+    }
+    
+    result
+}
+
+fn convert_name(name: &str) -> String {
+    if name.chars().all(|c| c.is_uppercase() || c == '_' || c.is_numeric()) {
+        name.to_uppercase()
+    } else {
+        to_snake_case(name)
+    }
+}
+
 pub struct Codegen {
     output: String,
     indent_level: usize,
@@ -85,14 +116,14 @@ impl Codegen {
             if import_stmt.imports.len() == 1 && import_stmt.imports[0].alias.is_none() {
                 self.output.push_str(&path);
                 self.output.push_str("::");
-                self.output.push_str(&import_stmt.imports[0].name);
+                self.output.push_str(&convert_name(&import_stmt.imports[0].name));
             } else if import_stmt.imports.len() == 1 {
                 self.output.push_str(&path);
                 self.output.push_str("::");
-                self.output.push_str(&import_stmt.imports[0].name);
+                self.output.push_str(&convert_name(&import_stmt.imports[0].name));
                 if let Some(ref alias) = import_stmt.imports[0].alias {
                     self.output.push_str(" as ");
-                    self.output.push_str(alias);
+                    self.output.push_str(&convert_name(alias));
                 }
             } else {
                 self.output.push_str(&path);
@@ -101,18 +132,15 @@ impl Codegen {
                     if i > 0 {
                         self.output.push_str(", ");
                     }
-                    self.output.push_str(&item.name);
+                    self.output.push_str(&convert_name(&item.name));
                     if let Some(ref alias) = item.alias {
                         self.output.push_str(" as ");
-                        self.output.push_str(alias);
+                        self.output.push_str(&convert_name(alias));
                     }
                 }
                 self.output.push('}');
             }
         } else {
-            // Local import - convert ./module 
-            // For main file: ./utils -> utils (sibling module)
-            // For module file: ./sibling -> super::sibling
             let path = if import_stmt.path.starts_with("./") {
                 let module_path = import_stmt.path.trim_start_matches("./").replace("/", "::");
                 if self.is_main_file {
@@ -127,10 +155,10 @@ impl Codegen {
             if import_stmt.imports.len() == 1 {
                 self.output.push_str(&path);
                 self.output.push_str("::");
-                self.output.push_str(&import_stmt.imports[0].name);
+                self.output.push_str(&convert_name(&import_stmt.imports[0].name));
                 if let Some(ref alias) = import_stmt.imports[0].alias {
                     self.output.push_str(" as ");
-                    self.output.push_str(alias);
+                    self.output.push_str(&convert_name(alias));
                 }
             } else {
                 self.output.push_str(&path);
@@ -139,10 +167,10 @@ impl Codegen {
                     if i > 0 {
                         self.output.push_str(", ");
                     }
-                    self.output.push_str(&item.name);
+                    self.output.push_str(&convert_name(&item.name));
                     if let Some(ref alias) = item.alias {
                         self.output.push_str(" as ");
-                        self.output.push_str(alias);
+                        self.output.push_str(&convert_name(alias));
                     }
                 }
                 self.output.push('}');
@@ -158,14 +186,14 @@ impl Codegen {
                 self.emit_indent();
                 self.output.push_str("pub ");
                 self.output.push_str("fn ");
-                self.output.push_str(&func_decl.name);
+                self.output.push_str(&to_snake_case(&func_decl.name));
                 self.output.push('(');
                 
                 for (i, param) in func_decl.parameters.iter().enumerate() {
                     if i > 0 {
                         self.output.push_str(", ");
                     }
-                    self.output.push_str(&param.name);
+                    self.output.push_str(&to_snake_case(&param.name));
                     self.output.push_str(": ");
                     self.emit_type(&param.param_type);
                 }
@@ -283,7 +311,6 @@ impl Codegen {
             self.output.push_str("const ");
             self.output.push_str(&var_decl.name.to_uppercase());
             
-            // Always require type for const
             self.output.push_str(": ");
             if let Some(var_type) = &var_decl.var_type {
                 if *var_type == Type::String {
@@ -292,17 +319,16 @@ impl Codegen {
                     self.emit_type(var_type);
                 }
             } else {
-                // Infer type from value if not specified
                 match &var_decl.value {
                     Expression::NumberLiteral(_) => self.output.push_str("i32"),
                     Expression::StringLiteral(_) => self.output.push_str("&str"),
                     Expression::BooleanLiteral(_) => self.output.push_str("bool"),
-                    _ => self.output.push_str("i32"), // default fallback
+                    _ => self.output.push_str("i32"),
                 }
             }
         } else {
             self.output.push_str("let mut ");
-            self.output.push_str(&var_decl.name);
+            self.output.push_str(&to_snake_case(&var_decl.name));
             
             if let Some(var_type) = &var_decl.var_type {
                 self.output.push_str(": ");
@@ -312,7 +338,7 @@ impl Codegen {
         
         self.output.push_str(" = ");
         
-        let needs_to_string = if let Some(var_type) = &var_decl.var_type {
+        let needs_to_string = !var_decl.is_const && if let Some(var_type) = &var_decl.var_type {
             matches!(var_decl.value, Expression::StringLiteral(_)) && 
             (*var_type == Type::String || *var_type == Type::Any)
         } else {
@@ -349,14 +375,18 @@ impl Codegen {
     fn generate_function_decl(&mut self, func_decl: &FunctionDecl) {
         self.emit_indent();
         self.output.push_str("fn ");
-        self.output.push_str(&func_decl.name);
+        if func_decl.name == "main" {
+            self.output.push_str("main");
+        } else {
+            self.output.push_str(&to_snake_case(&func_decl.name));
+        }
         self.output.push_str("(");
         
         for (i, param) in func_decl.parameters.iter().enumerate() {
             if i > 0 {
                 self.output.push_str(", ");
             }
-            self.output.push_str(&param.name);
+            self.output.push_str(&to_snake_case(&param.name));
             self.output.push_str(": ");
             self.emit_type(&param.param_type);
         }
@@ -579,7 +609,7 @@ impl Codegen {
                 self.output.push_str(if *b { "true" } else { "false" });
             }
             Expression::Identifier(name) => {
-                self.output.push_str(name);
+                self.output.push_str(&convert_name(name));
             }
             Expression::ArrayLiteral(elements) => {
                 self.output.push_str("vec![");
@@ -652,13 +682,12 @@ impl Codegen {
                 }
             }
             Expression::FunctionCall(name, args) => {
-                self.output.push_str(name);
+                self.output.push_str(&to_snake_case(name));
                 self.output.push('(');
                 for (i, arg) in args.iter().enumerate() {
                     if i > 0 {
                         self.output.push_str(", ");
                     }
-                    // Convert string literals to String for function parameters
                     if matches!(arg, Expression::StringLiteral(_)) {
                         self.generate_expression(arg);
                         self.output.push_str(".to_string()");

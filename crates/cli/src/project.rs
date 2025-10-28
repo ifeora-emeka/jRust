@@ -102,111 +102,74 @@ pub fn create_project_structure(project_name: &str, project_path: &Path) -> Resu
     config.save(project_path)?;
     
     // Create utils/random.jr
-    let utils_random = r#"export function getRandomNumber(min: number, max: number): number {
-    return min + 5;
+    let utils_random = r#"export function randomInRange(min: number, max: number): number {
+    return min + 7;
 }
 
-export function generateId(): number {
-    return 12345;
+export function generateUniqueId(): number {
+    return 42;
 }
 
-export const RANDOM_SEED: number = 42;
+export const SEED_VALUE: number = 123;
 "#;
     write_file(&utils_dir.join("random.jr"), utils_random)?;
     
     // Create utils/index.jr (module entry point)
-    let utils_index = r#"import {getRandomNumber, generateId, RANDOM_SEED} from "./random";
-
-export function formatMessage(prefix: string, message: string): string {
-    let result = prefix;
-    return result;
-}
-
-export function isValidAge(age: number): boolean {
-    return age >= 18;
-}
+    let utils_index = r#"import {randomInRange, generateUniqueId, SEED_VALUE} from "./random";
 
 export function getRandom(min: number, max: number): number {
-    return getRandomNumber(min, max);
+    return randomInRange(min, max);
 }
 
 export function createId(): number {
-    return generateId();
+    return generateUniqueId();
 }
 
-export const VERSION: string = "1.0.0";
-export const SEED: number = RANDOM_SEED;
+export const RANDOM_SEED: number = SEED_VALUE;
 "#;
     write_file(&utils_dir.join("index.jr"), utils_index)?;
     
     // Create main index.jr
-    let index_jr = r#"import {HashMap} from "std::collections";
-import {createId, getRandom, formatMessage, isValidAge, VERSION} from "./utils";
+    let index_jr = r#"import {createId, getRandom, RANDOM_SEED} from "./utils";
 
-struct User {
-    name: string,
-    id: number,
-    age: number
+const VERSION: string = "1.0.0";
+const MAX_COUNT: number = 5;
+
+function greet(name: string): void {
+    print("Hello, jRust developer!");
 }
 
-export function createUser(name: string, age: number): User {
-    let userId = createId();
-    return User {
-        name: name,
-        id: userId,
-        age: age
-    };
+function calculate(a: number, b: number): number {
+    let result = a + b;
+    return result;
 }
-
-export function displayUserInfo(user: User): void {
-    print("User: Alice");
-    print("ID: 12345");
-    print("Age: 25");
-}
-
-export const MAX_USERS: number = 100;
-export const MIN_AGE: number = 18;
 
 function main(): void {
-    print("=== Welcome to jRust! ===");
-    print("Version: 1.0.0");
+    print("=== jRust Demo ===");
     print("");
     
-    let alice = createUser("Alice", 25);
-    let bob = createUser("Bob", 30);
-    
-    displayUserInfo(alice);
-    print("");
-    displayUserInfo(bob);
+    greet("Developer");
     print("");
     
-    print("Validating ages...");
-    if isValidAge(25) {
-        print("✓ Alice is eligible");
-    }
-    if isValidAge(30) {
-        print("✓ Bob is eligible");
-    }
-    print("");
-    
-    print("Generating random values...");
-    let random = getRandom(1, 10);
-    print("Random number: 6");
+    let x: number = 10;
+    let y: number = 20;
+    let sum = calculate(x, y);
+    print("Sum: 30");
     print("");
     
     let numbers: number[] = [1, 2, 3, 4, 5];
-    print("Array created with 5 elements");
-    
+    print("Array length: 5");
     print("");
-    print("Counting:");
-    for n in [1, 2, 3] {
-        print("Count: 1");
-        print("Count: 2");
-        print("Count: 3");
-    }
     
+    let id = createId();
+    print("Generated ID: 42");
     print("");
-    print("✅ jRust demo completed!");
+    
+    let randomNum = getRandom(1, 100);
+    print("Random number: 8");
+    print("");
+    
+    print("✅ Demo complete!");
 }
 "#;
     write_file(&src_dir.join("index.jr"), index_jr)?;
