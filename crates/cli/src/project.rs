@@ -35,18 +35,18 @@ impl ProjectConfig {
     }
 
     pub fn from_path(path: &Path) -> Result<Self> {
-        let config_path = path.join("jrust.toml");
+        let config_path = path.join("Cargo.toml");
         let content = fs::read_to_string(&config_path)
-            .context("Failed to read jrust.toml")?;
+            .context("Failed to read Cargo.toml")?;
         toml::from_str(&content)
-            .context("Failed to parse jrust.toml")
+            .context("Failed to parse Cargo.toml")
     }
 
     pub fn save(&self, path: &Path) -> Result<()> {
-        let config_path = path.join("jrust.toml");
+        let config_path = path.join("Cargo.toml");
         let content = self.to_toml()?;
         fs::write(&config_path, content)
-            .context("Failed to write jrust.toml")?;
+            .context("Failed to write Cargo.toml")?;
         Ok(())
     }
 }
@@ -55,7 +55,7 @@ pub fn project_root() -> Result<PathBuf> {
     let current_dir = std::env::current_dir()
         .context("Failed to get current directory")?;
     
-    if current_dir.join("jrust.toml").exists() {
+    if current_dir.join("Cargo.toml").exists() {
         return Ok(current_dir);
     }
     

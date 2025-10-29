@@ -28,7 +28,7 @@ cd "%TEMP_DIR%"
 echo.
 echo Generated project structure:
 cd "%PROJECT_NAME%"
-dir /s /b *.jr jrust.toml 2>nul
+dir /s /b *.jr Cargo.toml 2>nul
 
 echo.
 echo Checking jRust code...

@@ -29,7 +29,7 @@ cd "$TEMP_DIR"
 echo ""
 echo "📝 Generated project structure:"
 cd "$PROJECT_NAME"
-find . -type f -name "*.jr" -o -name "jrust.toml" | sort
+find . -type f -name "*.jr" -o -name "Cargo.toml" | sort
 
 echo ""
 echo "🔍 Checking jRust code..."

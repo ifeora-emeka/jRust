@@ -60,8 +60,8 @@ fn test_init_creates_project_structure() {
         "Project directory should be created"
     );
     assert!(
-        project_path.join("jrust.toml").exists(),
-        "jrust.toml should be created"
+        project_path.join("Cargo.toml").exists(),
+        "Cargo.toml should be created"
     );
     assert!(
         project_path.join("src").exists(),
@@ -82,7 +82,7 @@ fn test_init_creates_project_structure() {
 }
 
 #[test]
-fn test_init_creates_valid_jrust_toml() {
+fn test_init_creates_valid_cargo_toml() {
     let temp_dir = TempDir::new().expect("Failed to create temp dir");
     let project_name = "config-test";
 
@@ -94,8 +94,8 @@ fn test_init_creates_valid_jrust_toml() {
         .assert()
         .success();
 
-    let config_path = temp_dir.path().join(project_name).join("jrust.toml");
-    let content = fs::read_to_string(&config_path).expect("Failed to read jrust.toml");
+    let config_path = temp_dir.path().join(project_name).join("Cargo.toml");
+    let content = fs::read_to_string(&config_path).expect("Failed to read Cargo.toml");
 
     assert!(
         content.contains("[package]"),
@@ -146,32 +146,28 @@ fn test_init_creates_index_jr_template() {
     // Check main index.jr content
     let content = fs::read_to_string(&index_jr_path).expect("Failed to read index.jr");
     assert!(
-        content.contains("struct User"),
-        "Template should have User struct"
-    );
-    assert!(
-        content.contains("import {HashMap} from \"std::collections\""),
-        "Template should have std import"
-    );
-    assert!(
-        content.contains("import {createId, getRandom, formatMessage, isValidAge, VERSION} from \"./utils\""),
+        content.contains("import {createId, getRandom, RANDOM_SEED} from \"./utils\""),
         "Template should import from utils"
     );
     assert!(
-        content.contains("export function"),
-        "Template should have export function"
+        content.contains("const VERSION"),
+        "Template should have VERSION constant"
     );
     assert!(
-        content.contains("export const"),
-        "Template should have export const"
+        content.contains("const MAX_COUNT"),
+        "Template should have MAX_COUNT constant"
+    );
+    assert!(
+        content.contains("function greet"),
+        "Template should have greet function"
+    );
+    assert!(
+        content.contains("function calculate"),
+        "Template should have calculate function"
     );
     assert!(
         content.contains("let numbers: number[]"),
         "Template should have number array"
-    );
-    assert!(
-        content.contains("for n in"),
-        "Template should have for loop"
     );
     assert!(
         content.contains("function main()"),
@@ -181,27 +177,27 @@ fn test_init_creates_index_jr_template() {
     // Check utils/index.jr content
     let utils_content = fs::read_to_string(&utils_index_path).expect("Failed to read utils/index.jr");
     assert!(
-        utils_content.contains("import {getRandomNumber, generateId, RANDOM_SEED} from \"./random\""),
+        utils_content.contains("import {randomInRange, generateUniqueId, SEED_VALUE} from \"./random\""),
         "utils/index.jr should import from random"
-    );
-    assert!(
-        utils_content.contains("export function formatMessage"),
-        "utils/index.jr should have formatMessage"
     );
     assert!(
         utils_content.contains("export function getRandom"),
         "utils/index.jr should have getRandom wrapper"
     );
+    assert!(
+        utils_content.contains("export function createId"),
+        "utils/index.jr should have createId wrapper"
+    );
 
     // Check utils/random.jr content
     let random_content = fs::read_to_string(&utils_random_path).expect("Failed to read utils/random.jr");
     assert!(
-        random_content.contains("export function getRandomNumber"),
-        "utils/random.jr should have getRandomNumber"
+        random_content.contains("export function randomInRange"),
+        "utils/random.jr should have randomInRange"
     );
     assert!(
-        random_content.contains("export const RANDOM_SEED"),
-        "utils/random.jr should have RANDOM_SEED"
+        random_content.contains("export const SEED_VALUE"),
+        "utils/random.jr should have SEED_VALUE"
     );
 }
 
@@ -305,7 +301,7 @@ fn test_run_executes_program() {
         .current_dir(&project_path)
         .assert()
         .success()
-        .stdout(predicate::str::contains("Welcome to"))
+        .stdout(predicate::str::contains("jRust Demo"))
         .stdout(predicate::str::contains("Program completed successfully"));
 }
 
@@ -331,7 +327,7 @@ fn test_run_custom_file() {
         .current_dir(&project_path)
         .assert()
         .success()
-        .stdout(predicate::str::contains("Welcome to"))
+        .stdout(predicate::str::contains("jRust Demo"))
         .stdout(predicate::str::contains("Program completed successfully"));
 }
 
@@ -439,7 +435,7 @@ fn test_full_workflow() {
         .current_dir(&project_path)
         .assert()
         .success()
-        .stdout(predicate::str::contains("Welcome to"));
+        .stdout(predicate::str::contains("jRust Demo"));
 }
 
 #[test]
